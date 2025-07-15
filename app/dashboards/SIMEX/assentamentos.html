@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>SAD – Sistema de Alerta de Degradação Florestal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bibliotecas CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root {
+      --primary-green: #28a745;
+      --dark-green: #1e7e34;
+      --light-gray: #f8f9fa;
+      --medium-gray: #e9ecef;
+      --dark-gray: #495057;
+      --card-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      --card-shadow-hover: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    body {
+      background-color: var(--light-gray);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 15px;
+    }
+    
+    .dashboard-header {
+      background: linear-gradient(120deg, #2c7744, var(--dark-green));
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+    }
+    
+    .dashboard-title {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .dashboard-subtitle {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+    
+    .card {
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      border: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background-color: #fff;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--card-shadow-hover);
+    }
+    
+    /* Títulos em cinza escuro e negrito */
+    .card-header {
+      background-color: white !important;
+      color: var(--dark-gray) !important;
+      font-weight: 700 !important;
+      border-bottom: 1px solid var(--medium-gray) !important;
+      padding: 12px 20px;
+      font-size: 1.1rem;
+    }
+    
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+      background: white;
+      padding: 12px 15px;
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+    }
+    
+    .year-selector {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+      background: white;
+      padding: 5px 15px;
+      border-radius: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .year-selector label {
+      margin-right: 10px;
+      font-weight: 500;
+      color: var(--dark-gray);
+    }
+    
+    .map-container {
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+      background: #f0f8ff;
+    }
+    
+    #map-graph {
+      height: 100%;
+      min-height: 450px;
+      background: #e6f7ff;
+    }
+    
+    /* Legenda em formato de barra vertical */
+    .heat-legend {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      line-height: 1.4;
+      z-index: 1000;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      font-size: 0.8rem;
+      width: 110px;
+    }
+    
+    .legend-title {
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 5px;
+      color: var(--dark-gray);
+    }
+    
+    .legend-gradient {
+      height: 150px;
+      width: 25px;
+      margin: 0 auto;
+      border-radius: 3px;
+    }
+    
+    .legend-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 150px;
+      position: absolute;
+      left: 40px;
+      top: 35px;
+      font-size: 0.75rem;
+    }
+    
+    .custom-button {
+      background: linear-gradient(120deg, var(--primary-green), var(--dark-green));
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 8px 18px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .custom-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    
+    /* Remover linhas de fundo dos gráficos */
+    .gridlayer, .cartesianlayer > .grid {
+      display: none !important;
+    }
+    
+    .js-plotly-plot .plotly .main-svg {
+      background-color: transparent !important;
+    }
+    
+    .settlement-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .settlement-item:hover {
+      background-color: #f0f8ff;
+    }
+    
+    .settlement-item.selected {
+      background-color: #e0f7e9;
+      font-weight: 600;
+    }
+    
+    .selection-info {
+      padding: 8px 0;
+      font-weight: 500;
+      color: var(--dark-gray);
+    }
+    
+    /* Melhorias na responsividade */
+    @media (max-width: 768px) {
+      .controls-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .year-selector {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container-fluid" id="app-root">
+    <!-- Linha de controles superior -->
+    <div class="controls-row">
+      <button id="reset-btn" class="btn btn-success btn-sm custom-button">
+        <i class="fa fa-filter me-1"></i>Remover Filtros
+      </button>
+      <button id="state-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#state-modal">
+        <i class="fa fa-map me-1"></i>Selecione o Estado
+      </button>
+      <button id="download-btn-open" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#download-modal">
+        <i class="fa fa-download me-1"></i>Baixar CSV
+      </button>
+      <button id="interest-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#interest-modal">
+        Selecionar Área de Interesse
+      </button>
+      
+      <!-- Seletor de ano ao lado do botão de interesse -->
+      <div class="year-selector">
+        <label for="year-select">Ano:</label>
+        <select id="year-select" class="form-select form-select-sm"></select>
+      </div>
+    </div>
+
+    <!-- barra + mapa -->
+    <div class="row gx-2 mb-4">
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100">
+          <div class="card-header">Alerta de Degradação Florestal Acumulado Top 10</div>
+          <div class="card-body p-0">
+            <div id="bar-settlement" style="height:450px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-header" id="map-title">Mapa de Degradação Ambiental (km²)</div>
+          <div class="card-body p-0 map-container">
+            <div id="map-graph" style="height:100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- série histórica + anual -->
+    <div class="row gx-2 mb-5">
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100">
+          <div class="card-header">
+             Alertas de Degradação Florestal Acumulado – Assentamentos por Estado
+          </div>
+          <div class="card-body p-0">
+            <div id="line-graph" style="height:450px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-header">Área Total de Degradação por Ano (km²)</div>
+          <div class="card-body p-0">
+            <div id="yearly-graph" style="height:450px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <!-- MODAIS -->
+  <!-- estados -->
+  <div class="modal fade" id="state-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Escolha os Estados</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <select id="state-select" class="form-select" multiple size="8"></select>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- download -->
+  <div class="modal fade" id="download-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Configurações de Download</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="download-state-checklist" class="mb-3"></div>
+          <hr>
+          <div class="mb-2">
+            <label class="me-2">Separador decimal</label>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="dec-sep" id="dec-dot" value="." checked>
+              <label class="form-check-label" for="dec-dot">Ponto</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value=",">
+              <label class="form-check-label" for="dec-comma">Vírgula</label>
+            </div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="remove-accents">
+            <label class="form-check-label" for="remove-accents">Sem acentuação</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="download-btn" class="btn btn-success me-2">Download</button>
+          <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- áreas de interesse -->
+  <div class="modal fade" id="interest-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Selecionar Área de Interesse</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="search-box mb-3">
+            <input type="text" id="settlement-search" class="form-control" placeholder="Buscar assentamento…">
+          </div>
+          <div class="selection-info">
+            <span id="selected-count">0</span> selecionados
+          </div>
+          <div id="settlement-list" class="settlement-list mt-2" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="clear-selection" class="btn btn-outline-secondary">Limpar Seleção</button>
+          <button id="apply-selection" class="btn btn-success">Aplicar Seleção</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bibliotecas JavaScript -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script type="module">
+  (async () => {
+    // URLs dos dados reais
+    const GEOJSON_URL = "/dataset/sad/geojson/AMZ_assentamentos.geojson";
+    const CSV_URL     = "/dataset/sad/csv/alertas_sad_desmatamento_08_2008_04_2024_assentamentos.csv";
+    
+    const normUF      = s => (s||'').toString().toUpperCase();
+    const CSV_UF_KEY  = 'ESTADO';
+    const BRAZIL_BOUNDS = L.latLngBounds(
+      L.latLng(-34.0, -74.0),
+      L.latLng(  5.5, -34.0)
+    );
+
+    let geojson, df = [], years = [], ufs = [], allSet = [];
+    let selUF = [], selSet = [], curYear, barSet = [];
+    let mapInit = false, leafletMap, geoLayer, legend;
+    let NAME_KEY = 'ASSENTAMEN';
+    let selectedSettlement = null;
+    let settlementPolygons = new Map();
+
+    // Elementos DOM
+    const stateBtn         = document.getElementById('state-btn');
+    const stateSelect      = document.getElementById('state-select');
+    const resetBtn         = document.getElementById('reset-btn');
+    const yearSelect       = document.getElementById('year-select');
+    const settlementList   = document.getElementById('settlement-list');
+    const settlementSearch = document.getElementById('settlement-search');
+    const selectedCount    = document.getElementById('selected-count');
+    const clearSel         = document.getElementById('clear-selection');
+    const applySel         = document.getElementById('apply-selection');
+    const downloadBtn      = document.getElementById('download-btn');
+    const downloadStateBox = document.getElementById('download-state-checklist');
+    const decSepSelector   = 'input[name="dec-sep"]:checked';
+    const removeAccentsChk = document.getElementById('remove-accents');
+
+    // Carrega o GeoJSON com os dados reais
+    async function loadGeo(){ 
+      try {
+        const response = await fetch(GEOJSON_URL);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        geojson = await response.json();
+        
+        // Processa os assentamentos
+        geojson.features.forEach(feature => {
+          const name = feature.properties[NAME_KEY];
+          if (name) {
+            settlementPolygons.set(name, feature);
+          }
+        });
+      } catch(e) {
+        console.error("Erro ao carregar GeoJSON:", e);
+        // Exibe mensagem de erro no dashboard
+        document.getElementById('app-root').insertAdjacentHTML(
+          'afterbegin', `<div class="alert alert-danger">Erro ao carregar dados geográficos: ${e.message}</div>`
+        );
+      }
+    }
+    
+    // Carrega o CSV com os dados reais
+    async function loadCsv(){
+      try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const txt = await response.text();
+        
+        df = d3.csvParse(txt, d => ({
+          ...d,
+          ANO     : +d.ANO     || null,
+          AREAKM2 : +d.AREAKM2 || 0,
+          [CSV_UF_KEY]: normUF(d[CSV_UF_KEY]),
+          ASSENTAMEN: d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : ''
+        }));
+      } catch(e) {
+        console.error("Erro ao carregar CSV:", e);
+        // Exibe mensagem de erro no dashboard
+        document.getElementById('app-root').insertAdjacentHTML(
+          'afterbegin', `<div class="alert alert-danger">Erro ao carregar dados: ${e.message}</div>`
+        );
+        df = [];
+      }
+    }
+
+    // Constrói os filtros com base nos dados carregados
+    function buildFilters(){
+      years = [...new Set(df.map(d=>d.ANO))].sort((a,b)=>a-b);
+      curYear = Math.max(...years);
+      yearSelect.innerHTML = years.map(y=>`<option>${y}</option>`).join('');
+      yearSelect.value = curYear;
+
+      const csvUF = [...new Set(df.map(d=>d[CSV_UF_KEY]).filter(Boolean))];
+      ufs = [...new Set([...csvUF])].sort();
+      stateSelect.innerHTML = ufs.map(u=>`<option value="${u}">${u}</option>`).join('');
+
+      allSet = [...new Set(df.map(d=>d.ASSENTAMEN))].sort();
+      buildDownloadChecklist();
+    }
+
+    // Atualiza o texto do botão de seleção de estado
+    function updateStateBtn(){
+      if(!selUF.length) 
+        stateBtn.innerHTML = '<i class="fa fa-map me-1"></i>Selecione o Estado';
+      else if(selUF.length===1) 
+        stateBtn.innerHTML = `<i class="fa fa-map me-1"></i>UF: ${selUF[0]}`;
+      else 
+        stateBtn.innerHTML = `<i class="fa fa-map me-1"></i>${selUF.length} UFs`;
+    }
+
+    // Filtra os dados baseados nas seleções atuais
+    function base(){
+      const y = +yearSelect.value;
+      selUF = Array.from(stateSelect.selectedOptions).map(o=>o.value);
+      updateStateBtn();
+      let out = df.filter(d=>d.ANO===y)
+                  .filter(d=>!selUF.length||selUF.includes(d[CSV_UF_KEY]));
+      if(selSet.length) {
+        out = out.filter(d=>{
+          const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+          return selSet.includes(label);
+        });
+      }
+      return out;
+    }
+
+    // Plota o gráfico de barras
+    function plotBar(){
+      const data = base();
+      // Agrupa por ASSENTAMEN e soma área
+      const agg = d3.rollup(data, v => d3.sum(v, d => d.AREAKM2), d => {
+        const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+        return label;
+      });
+      let arr = [...agg].map(([a, area])=>({ ASSENTAMEN: a, area }))
+                       .sort((a, b) => b.area - a.area);
+      // Selecionados ou Top 10
+      if (selSet.length) {
+        arr = arr.filter(d => selSet.includes(d.ASSENTAMEN));
+      } else {
+        arr = arr.slice(0, 10);
+      }
+      barSet = arr.map(d => d.ASSENTAMEN);
+
+      // Ajusta margem esquerda conforme tamanho do texto
+      let leftMargin;
+      if (arr.length) {
+        const lengths = arr.map(d => {
+          const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+          return label.length;
+        });
+        const maxLen = Math.max(...lengths);
+        leftMargin = Math.min(400, 40 + maxLen * 6);
+      } else {
+        leftMargin = 40;
+      }
+
+      // Formata valores para texto
+      const textValues = arr.map(d =>
+        (typeof d.area === 'number'
+          ? d.area.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+          : '')
+      );
+
+      const plotData = [{
+        x: arr.map(d => d.area),
+        y: arr.map(d => {
+          const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+          return label;
+        }),
+        type: 'bar',
+        orientation: 'h',
+        marker: {
+          color: arr.map(d => selectedSettlement === d.ASSENTAMEN 
+            ? '#ff6b6b' 
+            : '#28a745'),
+          opacity: 0.8,
+          line: { color: '#1e7e34', width: 1 }
+        },
+        text: textValues,
+        textposition: 'auto',
+        insidetextfont: { color: '#ffffff' },
+        outsidetextfont: { color: '#000000' }
+      }];
+
+      const layout = {
+        margin: { l: leftMargin, r: 10, t: 30, b: 30 },
+        height: 450,
+        yaxis: {
+          automargin: true,
+          autorange: 'reversed',
+          showgrid: false,
+          zeroline: false
+        },
+        xaxis: {
+          title: 'Área (ha)',
+          tickformat: ',.0f',
+          separatethousands: true,
+          showgrid: false,
+          zeroline: false
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)'
+      };
+
+      const config = {
+        displayModeBar: false,
+        responsive: true
+      };
+
+      Plotly.newPlot('bar-settlement', plotData, layout, config)
+        .then(gd => {
+          gd.on('plotly_click', data => {
+            if (data.points.length) {
+              const settlementName = data.points[0].y;
+              selectedSettlement = settlementName;
+              plotBar();
+              focusOnSettlement(settlementName);
+            }
+          });
+        });
+    }
+
+    // Inicializa o mapa
+    function initMap(){
+      if(mapInit) return;
+      leafletMap = L.map('map-graph',{zoomSnap:.3,attributionControl:false,
+        maxBounds:BRAZIL_BOUNDS, maxBoundsViscosity:1.0
+      }).setView([-14,-55],4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(leafletMap);
+      legend = L.DomUtil.create('div','heat-legend');
+      legend.style.display='none';
+      leafletMap.getContainer().appendChild(legend);
+      mapInit = true;
+    }
+
+    // Cria a legenda em formato de barra vertical
+    function heatLegend(min, max, scale){
+      const fmtMin = min.toLocaleString();
+      const fmtMed = ((min+max)/2).toLocaleString();
+      const fmtMax = max.toLocaleString();
+      
+      legend.innerHTML = `
+        <div class="legend-title">Área (km²)</div>
+        <div class="legend-gradient" style="background:linear-gradient(to top, ${scale(min)} 0%, ${scale((min+max)/2)} 50%, ${scale(max)} 100%)"></div>
+        <div class="legend-labels">
+          <div>${fmtMax}</div>
+          <div>${fmtMed}</div>
+          <div>${fmtMin}</div>
+        </div>`;
+      legend.style.display='block';
+    }
+
+    // Foca no assentamento selecionado
+    function focusOnSettlement(settlementName) {
+      if (!leafletMap) return;
+      
+      if (settlementPolygons.has(settlementName)) {
+        const feature = settlementPolygons.get(settlementName);
+        const layer = L.geoJSON(feature);
+        leafletMap.flyToBounds(layer.getBounds(), {
+          padding: [50, 50],
+          animate: true,
+          duration: 1.5
+        });
+        
+        if (window.highlightLayer) leafletMap.removeLayer(window.highlightLayer);
+        window.highlightLayer = L.geoJSON(feature, {
+          style: {
+            color: '#ff0000',
+            weight: 3,
+            fillOpacity: 0
+          }
+        }).addTo(leafletMap);
+      }
+    }
+
+    // Plota o mapa com os dados
+    function plotMap(){
+      document.getElementById('map-title').textContent = `Mapa de Degradação Ambiental (km²) ${yearSelect.value}`;
+      if(!mapInit) initMap();
+      const data = base();
+      const agg  = d3.rollup(data, v=>d3.sum(v,d=>d.AREAKM2), d => {
+        const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+        return label;
+      });
+      const show = selSet.length ? selSet : barSet;
+      const maxVal = d3.max(show, e=>agg.get(e)||0) || 1;
+      const color = d3.scaleSequential().domain([0,maxVal]).interpolator(d3.interpolateYlOrRd);
+      heatLegend(0, maxVal, color);
+      if(geoLayer) geoLayer.remove();
+      
+      // Cria camada de assentamentos
+      geoLayer = L.geoJSON(geojson, {
+        coordsToLatLng: c => L.latLng(c[1],c[0]),
+        filter: f => {
+          const propName = f.properties[NAME_KEY];
+          return propName && show.includes(propName);
+        },
+        style: f => {
+          const propName = f.properties[NAME_KEY];
+          const area = agg.get(propName) || 0;
+          return { 
+            weight:1.2, 
+            color:'#555', 
+            fillOpacity:.75, 
+            fillColor: color(area) 
+          };
+        },
+        onEachFeature: (f,layer) => {
+          const propName = f.properties[NAME_KEY];
+          const km2 = agg.get(propName) || 0;
+          layer.bindTooltip(`<strong>${propName}</strong><br>${km2.toLocaleString('pt-BR',{maximumFractionDigits:2})} km²`,{sticky:true});
+          layer.on({
+            mouseover: e => e.target.setStyle({weight:2,color:'#000'}).bringToFront(),
+            mouseout: e => geoLayer.resetStyle(e.target),
+            click: e => {
+              leafletMap.fitBounds(e.target.getBounds(),{maxZoom:10});
+              selectedSettlement = propName;
+              plotBar();
+            }
+          });
+        }
+      }).addTo(leafletMap);
+
+      if(geoLayer.getLayers().length){
+        const b = geoLayer.getBounds(); 
+        leafletMap.fitBounds(b);
+        if(leafletMap.getZoom()>8) leafletMap.setZoom(8);
+      }
+    }
+
+    // Plota o gráfico de linha (série temporal)
+    function plotLine(){
+      const fil = df.filter(d => {
+        const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+        return (!selUF.length || selUF.includes(d[CSV_UF_KEY]))
+            && (!selSet.length || selSet.includes(label));
+      });
+      
+      const by = d3.rollup(
+        fil,
+        v => d3.sum(v, d => d.AREAKM2),
+        d => {
+          const label = d.ASSENTAMEN != null ? String(d.ASSENTAMEN) : '';
+          return label;
+        },
+        d => d.ANO
+      );
+      
+      const pal = d3.schemeTableau10;
+      let show;
+      if (selSet.length) {
+        show = selSet.slice();
+      } else if (barSet && barSet.length) {
+        show = barSet.slice();
+      } else {
+        show = [...by.keys()].map(k => k != null ? String(k) : '');
+      }
+      show = show.filter(s => by.has(s));
+
+      const series = show.map((s, i) => {
+        const mp = by.get(s);
+        if (!mp) return null;
+        const yrs = [...mp.keys()]
+                      .filter(y => y != null)
+                      .sort((a, b) => a - b);
+        if (!yrs.length) return null;
+        const yvals = yrs.map(y => mp.get(y) || 0);
+        return {
+          name: s,
+          x: yrs,
+          y: yvals,
+          mode: 'lines+markers',
+          line: { width: 2, color: pal[i % pal.length] },
+          marker: { size: 8, color: pal[i % pal.length] }
+        };
+      }).filter(Boolean);
+
+      if (!series.length) {
+        Plotly.purge('line-graph');
+        return;
+      }
+
+      const layout = {
+        xaxis: { 
+          title: 'Ano',
+          showgrid: false,
+          zeroline: false
+        },
+        yaxis: { 
+          title: 'Área (km²)',
+          showgrid: false,
+          zeroline: false
+        },
+        legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.2 },
+        margin: { l: 50, r: 20, t: 30, b: 100 },
+        height: 450,
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)'
+      };
+      
+      if (years.length > 0) {
+        const minYear = 2008;
+        const maxYear = Math.max(...years);
+        layout.xaxis.range = [minYear - 0.5, maxYear + 0.5];
+      }
+      
+      Plotly.newPlot('line-graph', series, layout, { displayModeBar: false, responsive: true });
+    }
+
+    // Plota o gráfico anual
+    function plotYearly(){
+      const dat = df.filter(d=>
+        (!selUF.length || selUF.includes(d[CSV_UF_KEY])) &&
+        (!selSet.length || selSet.includes(d.ASSENTAMEN))
+      );
+      const agg = d3.rollup(dat, v=>d3.sum(v,d=>d.AREAKM2), d=>d.ANO);
+      const anos = [...agg.keys()].sort((a,b)=>a-b);
+      const val  = anos.map(a=>agg.get(a)||0);
+      
+      const layout = {
+        xaxis:{
+          title:'Ano',
+          showgrid: false,
+          zeroline: false
+        }, 
+        yaxis:{
+          title:'Área (km²)',
+          showgrid: false,
+          zeroline: false
+        },
+        margin:{l:50,r:10,t:30,b:40}, 
+        height:450,
+        plot_bgcolor:'rgba(0,0,0,0)', 
+        paper_bgcolor:'rgba(0,0,0,0)'
+      };
+      
+      if (years.length > 0) {
+        const minYear = 2008;
+        const maxYear = Math.max(...years);
+        layout.xaxis.range = [minYear - 0.5, maxYear + 0.5];
+      }
+      
+      Plotly.newPlot('yearly-graph',[{
+        x: anos, 
+        y: val, 
+        type: 'bar',
+        marker:{color:'rgba(40,167,69,0.7)',line:{width:1,color:'#1e7e34'}},
+        text: val.map(v=> (typeof v==='number' ? v.toFixed(2) : '')), 
+        textposition:'outside'
+      }], layout, {displayModeBar:false,responsive:true});
+    }
+
+    // Atualiza a lista de assentamentos
+    function refreshList(){
+      const term = (settlementSearch.value||'').toLowerCase();
+      settlementList.innerHTML = allSet
+        .filter(e=>e.toLowerCase().includes(term))
+        .map(e=>`<div class="settlement-item ${selSet.includes(e)?'selected':''}" data-name="${e}">${e}</div>`)
+        .join('');
+      selectedCount.textContent = selSet.length;
+      settlementList.querySelectorAll('.settlement-item').forEach(el=>{
+        el.onclick = ()=>{
+          const n = el.dataset.name;
+          const ix = selSet.indexOf(n);
+          if(ix===-1) selSet.push(n);
+          else selSet.splice(ix,1);
+          refreshList();
+        };
+      });
+    }
+
+    // Constrói a lista de estados para download
+    function buildDownloadChecklist(){
+      downloadStateBox.innerHTML = ufs.map(uf=>`
+        <div class="form-check form-check-inline mb-1">
+          <input class="form-check-input dl-uf" type="checkbox" id="dl-${uf}" value="${uf}">
+          <label class="form-check-label" for="dl-${uf}">${uf}</label>
+        </div>`).join('');
+    }
+
+    // Remove acentos para download
+    function stripAccents(txt){
+      return txt.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    }
+    
+    // Converte objeto para linha CSV
+    function objToCsvRow(obj,headers,decSep,noAcc){
+      return headers.map(h=>{
+        let v = obj[h] ?? '';
+        if(typeof v==='string') v = noAcc? stripAccents(v): v;
+        if(typeof v==='number' && decSep===',') v = v.toString().replace('.',',');
+        return `"${String(v).replace(/"/g,'""')}"`;
+      }).join(';');
+    }
+
+    // Event listeners
+    [yearSelect, stateSelect].forEach(el => el.onchange = ()=>{
+      plotBar(); plotMap(); plotLine(); plotYearly();
+    });
+    
+    resetBtn.onclick = ()=>{
+      stateSelect.selectedIndex = -1;
+      selUF = [];
+      yearSelect.value = curYear;
+      selSet = [];
+      selectedSettlement = null;
+      updateStateBtn();
+      plotBar(); plotMap(); plotLine(); plotYearly();
+    };
+    
+    settlementSearch.oninput = refreshList;
+    
+    clearSel.onclick = ()=>{ 
+      selSet = []; 
+      refreshList(); 
+    };
+    
+    applySel.onclick = ()=>{
+      bootstrap.Modal.getInstance(document.getElementById('interest-modal')).hide();
+      plotBar(); plotMap(); plotLine(); plotYearly();
+    };
+    
+    downloadBtn.onclick = ()=>{
+      const selUFs = Array.from(document.querySelectorAll('.dl-uf:checked')).map(el=>el.value);
+      const decSep = (document.querySelector(decSepSelector)||{}).value || '.';
+      const noAcc  = removeAccentsChk.checked;
+      const rows   = df.filter(d=>!selUFs.length||selUFs.includes(d[CSV_UF_KEY]));
+      if(!rows.length){ alert('Nenhum registro encontrado para as UFs selecionadas.'); return; }
+      const headers = Object.keys(rows[0]);
+      const csvLines = [ headers.join(';'), ...rows.map(r=>objToCsvRow(r,headers,decSep,noAcc)) ].join('\n');
+      const blob = new Blob([csvLines],{ type:'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a'); 
+      a.href = url; a.download = `alertas_degradacao_${Date.now()}.csv`;
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },0);
+    };
+
+    // Inicialização do dashboard
+    try{
+      await Promise.all([loadGeo(), loadCsv()]);
+
+      // Verifica a chave de nome no GeoJSON
+      if(geojson && geojson.features.length > 0) {
+        const sample = geojson.features[0]?.properties || {};
+        if(!('ASSENTAMEN' in sample)){
+          if('NOME_PROJ2' in sample) NAME_KEY='NOME_PROJ2';
+          else{
+            const alt = Object.keys(sample).find(k => k.toLowerCase().startsWith('nome'));
+            if(alt) NAME_KEY=alt;
+          }
+        }
+      }
+
+      buildFilters();
+      updateStateBtn();
+      refreshList();
+      
+      initMap();
+      
+      plotBar();
+      plotMap();
+      plotLine();
+      plotYearly();
+
+    } catch(e){
+      console.error(e);
+      document.getElementById('app-root').insertAdjacentHTML(
+        'afterbegin', `<div class="alert alert-danger">Erro: ${e.message}</div>`
+      );
+    }
+  })();
+  </script>
+</body>
+</html>

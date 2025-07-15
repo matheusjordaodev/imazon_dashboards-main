@@ -1,0 +1,21 @@
+{
+  "name": "imazon_dashboards",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/earthengine": "^1.5.21",
+    "axios": "^1.10.0",
+    "csv-parser": "^3.2.0",
+    "express": "^5.1.0",
+    "gaxios": "^7.1.0",
+    "google-auth-library": "^10.1.0"
+  },
+  "description": ""
+}

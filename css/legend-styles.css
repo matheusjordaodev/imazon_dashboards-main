@@ -1,0 +1,51 @@
+/* legend-styles.css */
+/* legenda gradiente */
+.heat-legend {
+  position: absolute;
+  right: 10px;
+  bottom: 30px;
+  z-index: 1000;
+  background: rgba(255,255,255,.85);
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  width: 120px;
+  text-align: center;
+}
+.heat-legend h4 {
+  margin: 0 0 5px;
+  font-size: .9rem;
+  font-weight: bold;
+  color: #333;
+}
+.legend-gradient {
+  height: 150px;
+  width: 25px;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+.legend-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 150px;
+  position: absolute;
+  left: 40px;
+  top: 40px;
+  font-size: .8rem;
+  color: #333;
+}
+.legend-labels span {
+  background: rgba(255,255,255,.7);
+  padding: 0 4px;
+  border-radius: 2px;
+}
+/* override: transparência total na legenda */
+.heat-legend {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.heat-legend .legend-labels span {
+  background: rgba(255,255,255,.6);
+}

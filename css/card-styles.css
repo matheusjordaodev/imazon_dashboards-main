@@ -1,0 +1,91 @@
+/* charts-styles.css */
+/* --- Containers de gráfico Plotly --- */
+#bar-settlement,
+#line-graph,
+#yearly-graph {
+  width: 100%;
+  /* altura padrão; será sobrescrita por media queries */
+  height: 450px;
+}
+
+/* Ajustes responsivos: manter coerência com getResponsiveConfig */
+@media (max-width: 575.98px) {
+  #bar-settlement,
+  #line-graph,
+  #yearly-graph {
+    height: 280px !important;
+  }
+}
+@media (min-width: 576px) and (max-width: 767.98px) {
+  #bar-settlement,
+  #line-graph,
+  #yearly-graph {
+    height: 320px !important;
+  }
+}
+@media (min-width: 768px) and (max-width: 991.98px) {
+  #bar-settlement,
+  #line-graph,
+  #yearly-graph {
+    height: 380px !important;
+  }
+}
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  /* opcional: mesma altura ou ajuste intermediário */
+  #bar-settlement,
+  #line-graph,
+  #yearly-graph {
+    height: 420px !important;
+  }
+}
+@media (min-width: 1200px) {
+  #bar-settlement,
+  #line-graph,
+  #yearly-graph {
+    height: 450px !important;
+  }
+}
+
+/* remover controles do Plotly (caso queira redundância) */
+.js-plotly-plot .plotly .modebar {
+  display: none !important;
+}
+
+/* Container do mapa */
+.map-container {
+  height: 450px;
+}
+@media (max-width: 767.98px) {
+  .map-container {
+    height: 320px;
+  }
+}
+@media (max-width: 575.98px) {
+  .map-container {
+    height: 280px;
+  }
+}
+
+/* Card: acrescentar um pouco de padding interno se quiser */
+.card {
+  /* se desejar, pode ajustar padding ou background aqui */
+}
+
+/* Ajustes de tipografia em cabeçalhos de card (se quiser padronizar) */
+.card-header {
+  /* Exemplo: texto centralizado e cor de fundo já modificada em card-styles.css */
+  text-align: center;
+}
+
+/* Se quiser um CSS separado só para responsividade de botões etc, mantenha nos arquivos existentes */
+
+/* Por fim, se quiser destacar o contêiner do gráfico com borda ou sombra extra: */
+.chart-wrapper {
+  position: relative;
+  /* padding para criar espaço em volta do gráfico, se desejado */
+  padding: 8px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+}

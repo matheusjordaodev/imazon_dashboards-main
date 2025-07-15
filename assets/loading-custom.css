@@ -1,0 +1,17 @@
+/* assets/loading-custom.css */
+
+/* Centraliza o loading no container */
+.dash-loading {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Substitui spinner padrão por imagem customizada */
+.dash-loading .dash-spinner {
+    border: none !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: url("/assets/preloader.gif") no-repeat center center !important;
+    background-size: contain !important;
+}

@@ -1,0 +1,45 @@
+/* modal-styles.css */
+/* lista de assentamentos */
+.settlement-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  transition: .2s;
+}
+.settlement-item:hover {
+  background: #f8f9fa;
+  cursor: pointer;
+}
+.settlement-item.selected {
+  background: #e6f7ff;
+  border-left: 3px solid #1890ff;
+}
+/* contador de selecionados */
+.selected-count {
+  background: #28a745;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+/* busca e lista */
+.search-box {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+  padding: 10px 0;
+}
+.settlement-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+.selection-info {
+  margin-top: 10px;
+  font-size: .9rem;
+  color: #6c757d;
+}

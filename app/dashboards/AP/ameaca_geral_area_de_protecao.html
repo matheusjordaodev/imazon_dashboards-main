@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard de Desmatamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS & LIBS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+  
+  <style>
+    :root {
+      --primary-green : #127C4B;
+      --dark-green    : #127C4B;
+      --light-gray    : #e9ecef;
+      --medium-gray   : #d1d7dc;
+      --dark-gray     : #495057;
+      --soft-gray     : #6c757d;   /* Titulação */
+      --card-shadow   : 0 4px 6px rgba(0,0,0,0.05);
+      --card-shadow-hover : 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    body {
+      font-family: system-ui, Helvetica, Arial, sans-serif;
+      background-color: var(--light-gray);
+      padding: 15px;
+    }
+
+    /* ---------- NOVO HEADER Ameaça e Pressão ---------- */
+    .header{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:28px;
+    }
+    .header-logo{
+      max-width:160px;
+      height:auto;
+    }
+    .subtitle{
+      font-size:1.1rem;
+      font-weight:500;
+      color:var(--dark-gray);
+      margin-top:6px;
+      text-align:center;
+    }
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      border:0;
+    }
+
+    /* Header principal ------------------------------------------------*/
+    .dashboard-header {
+      background: var(--primary-green);
+      color: #fff;
+      padding: 26px 20px;
+      border-radius: 10px;
+      margin-bottom: 28px;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+    }
+    .dashboard-title   { font-weight: 700; margin-bottom: 6px; }
+    .dashboard-subtitle{ font-size: 1.1rem; opacity: .9; }
+
+    /* Cards ------------------------------------------------------------*/
+    .card {
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      border: none;
+      transition: transform .3s ease, box-shadow .3s ease;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background-color: #fff;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: var(--card-shadow-hover); }
+
+    .card-header {
+      background-color: #fff !important;
+      color: var(--soft-gray) !important;  /* tom de cinza suave */
+      font-weight: 700 !important;         /* bold obrigatório */
+      border-bottom: 1px solid var(--medium-gray) !important;
+      padding: 12px 20px;
+      font-size: 1.1rem;
+    }
+
+    /* Filtros ----------------------------------------------------------*/
+    .controls-row {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-bottom: 20px; background: #fff; padding: 12px 15px;
+      border-radius: 10px; box-shadow: var(--card-shadow);
+    }
+    .filter-label { font-weight: 500; color: var(--dark-gray); }
+
+    /* Mapa -------------------------------------------------------------*/
+    .map-container{ position:relative; width:100%; height:60vh; border-radius:0 0 10px 10px; overflow:hidden; }
+    #map{ width:100%; height:100%; background:#e6f7ff; }
+    #overlay{ position:absolute; inset:0; background:rgba(255,255,255,.7); pointer-events:none; z-index:500; }
+    #legend-container{ position:absolute; bottom:10px; right:10px; z-index:1000; background:#fff; padding:8px; border-radius:5px; box-shadow:0 2px 5px rgba(0,0,0,.2); font-size:.8rem; }
+    .legend-title{ font-weight:600; text-align:center; margin-bottom:5px; color:var(--dark-gray); }
+    .legend-gradient{ height:150px; width:25px; margin:0 auto; border-radius:3px; }
+    .legend-labels{ display:flex; flex-direction:column; justify-content:space-between; height:150px; position:absolute; left:40px; top:35px; font-size:.75rem; }
+
+    /* Botões -----------------------------------------------------------*/
+    .custom-button{ background:linear-gradient(120deg,var(--primary-green),var(--dark-green)); color:#fff; border:none; border-radius:30px; padding:8px 18px; font-weight:500; transition:all .3s ease; box-shadow:0 2px 5px rgba(0,0,0,.1); }
+    .custom-button:hover{ transform:translateY(-2px); box-shadow:0 5px 15px rgba(0,0,0,.15); }
+
+    /* Spinners / overlay ----------------------------------------------*/
+    .loading-overlay{ position:relative; }
+    .loading-spinner{ position:absolute; inset:0; background:rgba(255,255,255,.75); display:flex; align-items:center; justify-content:center; z-index:60; }
+
+    /* Tabela -----------------------------------------------------------*/
+    .dash-table-container{ overflow-x:auto; padding:0 10px; }
+
+    /* Datatables botões ------------------------------------------------*/
+    .btn-dt{
+      background:linear-gradient(120deg,var(--primary-green),var(--dark-green)) !important;
+      color:#fff !important;
+      border:none !important;
+      border-radius:30px !important;
+      padding:5px 15px !important;
+      font-weight:500 !important;
+      transition:all .3s ease !important;
+      box-shadow:0 2px 5px rgba(0,0,0,.1) !important;
+    }
+    .btn-dt:hover{ transform:translateY(-2px) !important; box-shadow:0 5px 15px rgba(0,0,0,.15) !important; }
+
+    /* MOBILE Ajustes ---------------------------------------------------*/
+    @media (max-width:768px){
+      .map-container{ height:50vh; }
+      #bar-chart, #pie1, #pie2{ height:300px !important; }
+      #reset-btn, #download-btn{ width:100%; margin-top:.25rem; }
+      .filter-label{ margin-top:10px; }
+      .legend-labels{ font-size:.65rem; }
+    }
+
+    /* SIDEBAR fix (outro arquivo) -------------------------------------*/
+    .sidebar{ background: var(--primary-green); }
+    .sidebar img{ margin-bottom:0 !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Header Ameaça e Pressão -->
+  <header class="header">
+    <!-- logotipo central -->
+    <img src="../../../img/ameaca_e_pressao.png" alt="Ameaça e Pressão" class="header-logo">
+
+    <!-- sub‑título imediatamente abaixo -->
+    <p class="subtitle">
+      Análise de Área Acumulada na Amazônia Legal
+    </p>
+
+    <!-- h1 escondido para SEO/acessibilidade -->
+    <h1 class="sr-only">Ameaça e Pressão</h1>
+  </header>
+
+  <div class="container-fluid">
+
+
+
+    <!-- Filtros ------------------------------------------------------->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-md-auto">
+            <label class="filter-label fw-bold">MODALIDADE</label>
+          </div>
+          <div class="col-12 col-md-3">
+            <select id="modalidade-filter" class="form-select w-100">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-auto">
+            <label class="filter-label fw-bold">USO</label>
+          </div>
+          <div class="col-12 col-md-3">
+            <select id="uso-filter" class="form-select w-100">
+              <option value="">Todos</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-auto">
+            <label class="filter-label fw-bold">UF</label>
+          </div>
+          <div class="col-12 col-md-2">
+            <select id="uf-filter" class="form-select w-100">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div class="col-6 col-md-auto mt-3 mt-md-0">
+            <button id="reset-btn" class="btn custom-button w-100 w-md-auto">
+              <i class="fa fa-filter me-1"></i>Remover Filtros
+            </button>
+          </div>
+
+          <div class="col-6 col-md-auto mt-3 mt-md-0">
+            <button id="download-btn" class="btn custom-button w-100 w-md-auto">
+              <i class="fa fa-download me-1"></i>Baixar CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mapa + Gráfico de Barras ------------------------------------->
+    <div class="row gx-2 mb-4">
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">Mapa de Áreas Protegidas</div>
+          <div class="card-body p-0">
+            <div class="map-container">
+              <div id="map" class="w-100 h-100"></div>
+              <div id="overlay"></div>
+              <div id="legend-container"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">Áreas mais Desmatadas</div>
+          <div class="card-body p-0">
+            <div class="loading-overlay">
+              <div id="bar-chart" style="width:100%; height:100%"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DONUTS -------------------------------------------------------->
+    <div class="row gx-2 mb-4">
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">Ameaça de Desmatamento por Estado e Modalidade</div>
+          <div class="card-body p-0">
+            <div class="loading-overlay">
+              <div id="pie1" style="width:100%; height:100%"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">Áreas Protegidas mais Ameaçadas</div>
+          <div class="card-body p-0">
+            <div class="loading-overlay">
+              <div id="pie2" style="width:100%; height:100%"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -------------------------------------------------------->
+    <div class="row gx-2 mb-5">
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">Áreas Protegidas Mais Afetadas</div>
+          <div class="card-body">
+            <div class="dash-table-container">
+              <div class="loading-overlay">
+                <table id="top-table" class="display compact w-100">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Focos de Calor</th>
+                      <th>Número de CAR</th>
+                      <th>Área de CAR (km²)</th>
+                      <th>Estradas Não Oficiais (km)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <div class="loading-spinner">
+                  <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Carregando…</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS LIBS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- JS PRINCIPAL -->
+  <script>
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    (async () => {
+      /* helpers para mostrar/ocultar spinner ----------------------- */
+      const showLoading = id => {
+        const s = document.querySelector(`#${id}`).closest(".loading-overlay")?.querySelector(".loading-spinner");
+        if (s) s.style.display = "flex";
+      };
+      const hideLoading = id => {
+        const s = document.querySelector(`#${id}`).closest(".loading-overlay")?.querySelector(".loading-spinner");
+        if (s) s.style.display = "none";
+      };
+
+      /* CONSTANTES ------------------------------------------------ */
+      const BRAZIL_BOUNDS = [[-33.75, -73.99], [5.27, -34.79]];
+      const PALETTE = ["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#f03b20","#bd0026","#800026"];
+      const N_CLASSES = PALETTE.length;
+      const isMobile = () => window.matchMedia("(max-width:768px)").matches;
+      const abbreviate = (txt, len = 18) => isMobile() && txt.length > len ? txt.slice(0, len-1) + "…" : txt;
+      const stripPrefix = txt => {
+        const PREFIX = ["APA ","ARIE ","PARNA ","RESEX ","RDS "];
+        const ARTICLES = ["DA ","DAS ","DE ","DES ","DO ","DOS "];
+        let t = (txt || "").trim();
+        for (const p of PREFIX) if (t.toUpperCase().startsWith(p)) { t = t.slice(p.length); break; }
+        for (const a of ARTICLES) if (t.toUpperCase().startsWith(a)) { t = t.slice(a.length); break; }
+        return t.trim();
+      };
+
+      /* GEOJSON --------------------------------------------------- */
+      const GEO_URL = "https://raw.githubusercontent.com/imazon-cgi/ap/main/dataset/geojson/AMEACA_GERAL_Area_de_Protecao.geojson";
+      let geojson;
+      try {
+        const resp = await fetch(GEO_URL);
+        geojson = await resp.json();
+      } catch (err) {
+        console.error("Erro ao carregar GeoJSON", err);
+        geojson = { features: [] };
+      }
+      const FEATURES = geojson.features || [];
+      const PROPS    = FEATURES.map(f => f.properties);
+
+      /* filtros --------------------------------------------------- */
+      const unique = arr => [...new Set(arr.filter(Boolean))].sort();
+      const MODALIDADES = unique(PROPS.map(p => p.MODALIDADE));
+      const USOS        = unique(PROPS.map(p => p.USO));
+      const UFS         = unique(PROPS.map(p => p.UF));
+      const appendOpts  = (id, opts) => {
+        const sel = document.getElementById(id);
+        opts.forEach(o => sel.insertAdjacentHTML("beforeend", `<option value="${o}">${o}</option>`));
+      };
+      appendOpts("modalidade-filter", MODALIDADES);
+      appendOpts("uso-filter",       USOS);
+      appendOpts("uf-filter",        UFS);
+
+      /* escala ---------------------------------------------------- */
+      const values = PROPS.map(p => +p.DESMATAM_1 || 0);
+      const minVal = values.length ? Math.min(...values) : 0;
+      const maxVal = values.length ? Math.max(...values) : 0;
+      const step   = (maxVal - minVal) / N_CLASSES;
+      const BINS   = Array.from({length:N_CLASSES+1}, (_,i) => minVal + i*step);
+      const classify = v => {
+        if (v == null) return "#ccc";
+        for (let i=0;i<N_CLASSES;i++) if (v <= BINS[i+1]) return PALETTE[i];
+        return PALETTE[N_CLASSES-1];
+      };
+
+      /* legenda --------------------------------------------------- */
+      const legendDiv = document.getElementById("legend-container");
+      const buildLegend = () => `
+        <div class="legend-title">Nível de Desmatamento (km²)</div>
+        <div style="display:flex;align-items:center;font-size:.75rem">
+          <div class="legend-gradient" style="background:linear-gradient(to top,${PALETTE.at(-1)},${PALETTE[0]}); border:1px solid #ccc"></div>
+          <div class="legend-labels"><span>${Math.round(minVal)}</span><span>${Math.round(maxVal)}</span></div>
+        </div>`;
+
+      /* filtro in-memory ----------------------------------------- */
+      const filter = (m,u,uf) => FEATURES.filter(f => (
+        (!m  || f.properties.MODALIDADE === m) &&
+        (!u  || f.properties.USO        === u) &&
+        (!uf || f.properties.UF        === uf)
+      ));
+
+      /* Leaflet --------------------------------------------------- */
+      const map = L.map("map", {
+        center: [-14.2,-51.9], zoom:4, minZoom:4,
+        maxBounds:BRAZIL_BOUNDS, maxBoundsViscosity:.9, zoomControl:false
+      }).setView([-4,-52],4);
+      window.addEventListener("resize", () => map.invalidateSize());
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution:"© OpenStreetMap" }).addTo(map);
+      const layerGroup = L.layerGroup().addTo(map);
+
+      const makePolygons = feats => {
+        layerGroup.clearLayers();
+        feats.forEach(feat => {
+          const g = feat.geometry; if (!g) return;
+          const crd = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : null;
+          if (!crd) return;
+          const rings = crd.map(r => (r[0] || r).map(([lon,lat]) => [lat,lon]));
+          const valor = +feat.properties.DESMATAM_1 || 0;
+          const pl = L.polygon(rings, { color:"#000", weight:1, fillColor:classify(valor), fillOpacity:.7 }).addTo(layerGroup);
+          const nome = feat.properties.NOME || "—";
+          const nivel= valor.toFixed(2);
+          pl.bindTooltip(`<div><strong>${nome}</strong><br>Nível: ${nivel} km²</div>`);
+          pl.bindPopup(`<strong>${nome}</strong><br>Nível: ${nivel} km²`);
+          pl.on("click", () => map.setView(pl.getBounds().getCenter(), map.getZoom()+1));
+        });
+      };
+
+      /* filtros --------------------------------------------------- */
+      const currentFilters = () => [
+        document.getElementById("modalidade-filter").value || null,
+        document.getElementById("uso-filter").value        || null,
+        document.getElementById("uf-filter").value         || null
+      ];
+
+      /* Render inicial ------------------------------------------- */
+      const mapSpinner = document.querySelector(".map-container .loading-spinner");
+      if (mapSpinner) mapSpinner.style.display = "flex";
+      makePolygons(filter(...currentFilters()));
+      document.getElementById("overlay").style.display="none";
+      legendDiv.innerHTML = buildLegend();
+      if (mapSpinner) mapSpinner.style.display = "none";
+
+      /* PLOTLY ---------------------------------------------------- */
+      const barDiv = document.getElementById("bar-chart");
+      const pie1Div= document.getElementById("pie1");
+      const pie2Div= document.getElementById("pie2");
+      window.addEventListener("resize", () => {
+        if (barDiv.data)  Plotly.Plots.resize(barDiv);
+        if (pie1Div.data) Plotly.Plots.resize(pie1Div);
+        if (pie2Div.data) Plotly.Plots.resize(pie2Div);
+      });
+
+      const renderBar = (m,u,uf) => {
+        showLoading("bar-chart");
+        const rows = filter(m,u,uf).map(f => ({ area: stripPrefix(f.properties.NOME), km:+f.properties.DESMATAM_1||0 }))
+                                   .sort((a,b)=>b.km-a.km).slice(0,10);
+        if (!rows.length){ Plotly.newPlot(barDiv,[],{}, {responsive:true}).then(()=>hideLoading("bar-chart")); return; }
+        const xVals = rows.map(r=>r.km);
+        const yVals = rows.map(r=>r.area);
+        Plotly.newPlot(barDiv,[{
+          type:"bar", orientation:"h", x:xVals, y:yVals,
+          marker:{ color:"#2E8B57", line:{width:0} },
+          text:xVals.map(v=>v.toFixed(2)), textposition:"outside",
+          textfont:{ size:isMobile()?10:12, color:"#000" }, cliponaxis:false
+        }],{
+          template:"plotly_white", height:isMobile()?300:450,
+          title:{ text:"Áreas mais Desmatadas", font:{ size:16, color:"var(--soft-gray)" } },
+          bargap:.30, margin:{ l:100, r:80, t:60, b:20 },
+          xaxis:{ title:"Área Desmatada (km²)", showgrid:true, gridcolor:"rgba(0,0,0,.08)" },
+          yaxis:{ automargin:true, tickfont:{ size:isMobile()?10:12 } }
+        },{responsive:true}).then(()=>hideLoading("bar-chart"));
+      };
+
+      const renderPies = (m,u,uf) => {
+        showLoading("pie1"); showLoading("pie2");
+        const feats = filter(m,u,uf);
+        if (!feats.length){
+          Plotly.newPlot(pie1Div,[],{}, {responsive:true}).then(()=>hideLoading("pie1"));
+          Plotly.newPlot(pie2Div,[],{}, {responsive:true}).then(()=>hideLoading("pie2"));
+          return;
+        }
+
+        const makePie = (div, labels, values, title) => Plotly.newPlot(div,[{
+          type:"pie", labels:labels.map(abbreviate), values, hole:.35, textinfo:"none",
+          hovertemplate:"<b>%{label}</b><br>%{value:.2f} km²<br>%{percent}<extra></extra>"
+        }],{
+          template:"plotly_white", title:{ text:title, font:{ size:isMobile()?16:19, color:"var(--soft-gray)" } },
+          height:isMobile()?280:400,
+          legend:isMobile()?{ orientation:"h", x:.5, y:-.25, xanchor:"center", font:{ size:9 } }:{ orientation:"v", x:1.05, y:.5, xanchor:"left", yanchor:"middle", font:{ size:11 } },
+          margin:isMobile()?{ l:10,r:10,t:42,b:70 }:{ l:10,r:140,t:50,b:30 }
+        }, {responsive:true});
+
+        /* pie1: UF -------------------------------------------------*/
+        const aggUF={}; feats.forEach(f=>{ const k=f.properties.UF||"—"; aggUF[k]=(aggUF[k]||0)+(+f.properties.DESMATAM_1||0); });
+        /* pie2: área proteção ------------------------------------*/
+        const aggAP={}; feats.forEach(f=>{ const k=stripPrefix(f.properties.NOME||"—"); aggAP[k]=(aggAP[k]||0)+(+f.properties.DESMATAM_1||0); });
+        const topAP = Object.entries(aggAP).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+        Promise.all([
+          makePie(pie1Div, Object.keys(aggUF), Object.values(aggUF), ""),
+          makePie(pie2Div, topAP.map(t=>t[0]), topAP.map(t=>t[1]), "")
+        ]).then(()=>{ hideLoading("pie1"); hideLoading("pie2"); });
+      };
+
+      /* Datatable -------------------------------------------------*/
+      let dt = null;
+      const renderTable = (m,u,uf) => {
+        showLoading("top-table");
+        const rows = filter(m,u,uf).sort((a,b)=>(+b.properties.DESMATAM_1||0)-(+a.properties.DESMATAM_1||0)).slice(0,20)
+                      .map(f=>{ const p=f.properties; return [ stripPrefix(p.NOME||"—"), +p["FOCOS DE C"]||0, +p["N DE CAR"]||0, (+p["CAR"]||0).toFixed(2), +p["ESTRADAS N"]||0 ]; });
+        if (!dt){
+          dt = $("#top-table").DataTable({ data:rows, paging:true, searching:false, info:false, order:[], dom:"Bfrtip",
+            buttons:[
+              { extend:"copy", text:"<i class=\"fas fa-copy me-1\"></i>Copiar", className:"btn-dt", exportOptions:{ columns:":visible" } },
+              { extend:"excel",text:"<i class=\"fas fa-file-excel me-1\"></i>Excel",className:"btn-dt",title:"Areas_Protegidas_Mais_Afetadas", exportOptions:{columns:":visible"} },
+              { extend:"csv",  text:"<i class=\"fas fa-file-csv me-1\"></i>CSV",  className:"btn-dt",title:"Areas_Protegidas_Mais_Afetadas", exportOptions:{columns:":visible"} }
+            ],
+            language:{ buttons:{ copyTitle:"Copiado para área de transferência", copySuccess:{ _:"%d linhas copiadas", 1:"1 linha copiada" } } },
+            initComplete:() => hideLoading("top-table")
+          });
+        } else { dt.clear(); dt.rows.add(rows).draw(); hideLoading("top-table"); }
+      };
+
+      /* Refresh geral -------------------------------------------- */
+      const refreshAll = () => { const [m,u,uf] = currentFilters(); renderBar(m,u,uf); renderPies(m,u,uf); renderTable(m,u,uf); makePolygons(filter(m,u,uf)); };
+      ["modalidade-filter","uso-filter","uf-filter"].forEach(id => document.getElementById(id).addEventListener("change", refreshAll));
+      document.getElementById("reset-btn").addEventListener("click", ()=>{ document.getElementById("modalidade-filter").value=""; document.getElementById("uso-filter").value=""; document.getElementById("uf-filter").value=""; refreshAll(); });
+
+      /* CSV ------------------------------------------------------- */
+      document.getElementById("download-btn").addEventListener("click", ()=>{
+        const [m,u,uf] = currentFilters();
+        const feats = filter(m,u,uf);
+        const header = "NOME,DESMATAM_1,MODALIDADE,USO,UF\n";
+        const csv = feats.map(f=>{ const p=f.properties; return [`"${(p.NOME||"").replace(/"/g,'""')}"`, p.DESMATAM_1||"", p.MODALIDADE||"", p.USO||"", p.UF||""].join(","); }).join("\n");
+        saveAs(new Blob([header+csv], { type:"text/csv;charset=utf-8" }), "areas_filtradas.csv");
+      });
+
+      /* init -------------------------------------------------------*/
+      if (geojson) refreshAll(); else console.error("GeoJSON não carregado.");
+
+    })().catch(err=>console.error("[Dashboard Error]",err));
+  }
+  </script>
+</body>
+</html>

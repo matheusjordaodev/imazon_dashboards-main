@@ -1,0 +1,448 @@
+/* =============== VARIÁVEIS ================= */
+:root{
+  --sb-w: 290px;      /* largura da sidebar         */
+  --ft-h: 45px;       /* altura do footer           */
+  --tb-h: 56px;       /* altura da topbar (mobile)  */
+}
+
+/* =============== RESET E PREVENÇÃO DE OVERFLOW ================= */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important; /* FORÇA ELIMINAÇÃO DA ROLAGEM HORIZONTAL */
+}
+
+/* =============== DESKTOP =================== */
+#sidebar{
+  width: var(--sb-w);
+  max-width: var(--sb-w); /* LIMITA LARGURA MÁXIMA */
+  position: fixed; 
+  top: 0; 
+  left: 0;
+  height: 100vh; 
+  overflow-y: auto;
+  overflow-x: hidden; /* ELIMINA ROLAGEM HORIZONTAL NA SIDEBAR */
+  transition: transform .3s;
+  z-index: 1030;
+}
+
+#content{
+  position: fixed;
+  top: 0;                               /* sem topbar no desktop  */
+  left: var(--sb-w); 
+  right: 0;
+  bottom: var(--ft-h);
+  display: flex; 
+  flex-direction: column;
+  min-height: 0;
+  max-width: calc(100vw - var(--sb-w)); /* LIMITA LARGURA MÁXIMA */
+  overflow-x: hidden; /* ELIMINA ROLAGEM HORIZONTAL NO CONTEÚDO */
+}
+
+#iframe-dashboard-container{
+  flex: 1 1 auto;
+  display: flex; 
+  margin: 0; 
+  padding: 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%; /* GARANTE QUE NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA QUALQUER OVERFLOW */
+}
+
+#dashboard-iframe{
+  flex: 1 1 100%;
+  border: 0;
+  width: 100%; 
+  height: 100%;
+  min-height: 0;
+  max-width: 100%; /* GARANTE QUE O IFRAME NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW DO IFRAME */
+}
+
+/* topbar some no desktop */
+#topbar{ 
+  display: none; 
+}
+
+/* =============== MOBILE ≤768 px ============ */
+@media (max-width:768px){
+  /* Ajustar variáveis para mobile */
+  :root {
+    --sb-w: 280px; /* REDUZ LARGURA DA SIDEBAR EM MOBILE */
+  }
+
+  /* esconde sidebar fora da tela; botão a traz de volta */
+  #sidebar{ 
+    transform: translateX(-100%); 
+    max-width: var(--sb-w);
+  }
+  #sidebar.active{ 
+    transform: translateX(0); 
+  }
+
+  /* topbar visível */
+  #topbar{
+    display: flex; 
+    align-items: center;
+    height: var(--tb-h);
+    padding: 0 .75rem;
+    width: 100%;
+    max-width: 100vw; /* LIMITA À LARGURA DA VIEWPORT */
+    overflow: hidden; /* ELIMINA OVERFLOW */
+  }
+
+  /* conteúdo abaixa para não ficar atrás da topbar */
+  #content{ 
+    top: var(--tb-h); 
+    left: 0; 
+    right: 0;
+    max-width: 100vw; /* LIMITA À LARGURA DA VIEWPORT */
+  }
+
+  /* donuts etc. se você tiver IDs específicos */
+  #pie1, #pie2{ 
+    height: 280px !important; 
+  }
+}
+
+/* remove barras do próprio iframe */
+#dashboard-iframe::-webkit-scrollbar{ 
+  width: 0; 
+  height: 0; 
+}
+#dashboard-iframe{ 
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
+}
+
+/* link ativo */
+.iframe-link.active{ 
+  background: #28a74518; 
+  font-weight: 700; 
+}
+
+/* pequenas bordas visuais (opcional) */
+.iframe-link{ 
+  transition: background .15s; 
+}
+.iframe-link:hover{ 
+  background: #0001; 
+}
+
+.filter-topbar{
+  background: #00755F;
+  color: #fff;
+  padding: .35rem .75rem;
+  font-weight: 600;
+  border-radius: 4px 4px 0 0;
+  display: flex; 
+  align-items: center;
+  margin-bottom: .5rem;   /* distância até os filtros */
+  width: 100%;
+  max-width: 100%; /* GARANTE QUE NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+/* ─────────── TOPBAR (sempre visível) ─────────── */
+#topbar{
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  right: 0;
+  height: var(--tb-h);
+  background: #00755F;           /* verde */
+  color: #fff;
+  display: flex; 
+  align-items: center;
+  padding: 0 .75rem;
+  z-index: 1025;
+  width: 100%;
+  max-width: 100vw; /* LIMITA À LARGURA DA VIEWPORT */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+/* ─────────── SIDEBAR ─────────── */
+#sidebar{
+  width: var(--sb-w);
+  max-width: var(--sb-w); /* LIMITA LARGURA MÁXIMA */
+  position: fixed;
+  top: var(--tb-h);             /* abaixo da topbar         */
+  left: 0;
+  height: calc(100vh - var(--tb-h));
+  overflow-y: auto;
+  overflow-x: hidden; /* ELIMINA ROLAGEM HORIZONTAL */
+  transition: transform .3s;
+  z-index: 1030;
+}
+
+/* recolhida (ícone/hambúrguer) */
+body.sidebar-collapsed #sidebar{ 
+  transform: translateX(-100%); 
+}
+
+/* ─────────── CONTEÚDO (iframe) ─────────── */
+#content{
+  position: fixed;
+  top: var(--tb-h);
+  left: var(--sb-w);            /* espaço da sidebar         */
+  right: 0; 
+  bottom: var(--ft-h); /* reserva p/ footer         */
+  display: flex; 
+  flex-direction: column;
+  min-height: 0;
+  transition: left .3s;
+  max-width: calc(100vw - var(--sb-w)); /* LIMITA LARGURA MÁXIMA */
+  overflow-x: hidden; /* ELIMINA ROLAGEM HORIZONTAL */
+}
+
+/* quando a sidebar some → conteúdo ocupa 100 % */
+body.sidebar-collapsed #content{ 
+  left: 0; 
+  max-width: 100vw; /* AJUSTA LARGURA MÁXIMA */
+}
+
+/* contêiner + iframe ocupam o espaço livre */
+#iframe-dashboard-container{ 
+  flex: 1 1 auto; 
+  display: flex; 
+  min-height: 0; 
+  width: 100%;
+  max-width: 100%; /* GARANTE QUE NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+#dashboard-iframe{ 
+  flex: 1 1 100%; 
+  width: 100%; 
+  height: 100%; 
+  border: 0; 
+  max-width: 100%; /* GARANTE QUE O IFRAME NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW DO IFRAME */
+}
+
+/* ─────────── FOOTER (fica escondido) ─────────── */
+footer.footer{
+  position: fixed; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  height: var(--ft-h);
+  background: #00755F; 
+  color: #fff;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  transform: translateY(100%);       /* fora da tela */
+  transition: transform .3s ease;
+  width: 100%;
+  max-width: 100vw; /* LIMITA À LARGURA DA VIEWPORT */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+/* ─────────── PEQUENOS EXTRAS ─────────── */
+.iframe-link.active{ 
+  background: #28a74518; 
+  font-weight: 700; 
+}
+
+#dashboard-iframe::-webkit-scrollbar{ 
+  width: 0; 
+  height: 0; 
+}
+
+#dashboard-iframe{ 
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
+}
+
+/* aumenta a marca ImazonGeo em todos os pontos onde foi usada */
+.sidebar-header h5,
+.boxtop h5,
+.navbar .navbar-brand {
+  font-size: 1.6rem;     /* antes devia estar ~1rem */
+  line-height: 1.2;      /* deixa a linha mais "justa" */
+}
+
+/* se quiser só na barra superior: */
+.boxtop h5 { 
+  font-size: 2rem; 
+}
+
+/* se quiser só na sidebar: */
+.sidebar-header h5 { 
+  font-size: 1.8rem; 
+}
+
+/* exemplo de aumentar apenas a palavra "Geo" para dar destaque */
+.verde { 
+  font-weight: 700; 
+}    /* já existe cor; aqui turbina com bold */
+
+/* ─── OVERRIDE LAYOUT SIDEBAR + IFRAME ─────────────────────────── */
+/* wrapper engloba sidebar + content */
+.wrapper {
+  display: flex;
+  height: calc(100vh - var(--ft-h));
+  width: 100%;
+  max-width: 100vw; /* LIMITA À LARGURA DA VIEWPORT */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+/* ─── FIXA A NAVBAR NO TOPO ───────────────────────────────────── */
+.navbar-header {
+  position: fixed;
+  top: 0;
+  left: var(--sb-w);
+  right: 0;
+  height: var(--tb-h);
+  z-index: 1040;           /* acima da sidebar (1030) */
+  background: #00755F;     /* mesma cor da sua topbar */
+  display: flex;
+  align-items: center;
+  padding: 0 .75rem;
+  width: calc(100vw - var(--sb-w)); /* CALCULA LARGURA CORRETA */
+  max-width: calc(100vw - var(--sb-w)); /* LIMITA LARGURA MÁXIMA */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+/* quando a sidebar colapsa, a navbar também empurra para esquerda */
+body.sidebar-collapsed .navbar-header {
+  left: 0 !important;
+  width: 100vw; /* OCUPA TODA A LARGURA */
+  max-width: 100vw; /* LIMITA À LARGURA DA VIEWPORT */
+}
+
+/* ==== OVERRIDE FINAL – elimina width fixo herdado ==== */
+#content,
+#content.active {        /* mata as regras antigas */
+  width: auto !important;  /* libera cálculo por left/right */
+  max-width: calc(100vw - var(--sb-w)) !important; /* LIMITA LARGURA */
+}
+
+body.sidebar-collapsed #content.active {
+  width: auto !important;  /* idem quando a antiga classe .active aparecer */
+  max-width: 100vw !important; /* AJUSTA LARGURA MÁXIMA */
+}
+
+/* mantém o iframe ocupando todo o resto, sem sobrepor a navbar */
+#iframe-dashboard-container {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%; /* GARANTE QUE NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+}
+
+#dashboard-iframe {
+  flex: 1 1 100%;
+  width: 100%;
+  height: 100%;
+  border: none;
+  max-width: 100%; /* GARANTE QUE O IFRAME NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW DO IFRAME */
+}
+
+.sidebar-logo {
+  width: 235px;
+  height: 235px;
+  max-width: 100%; /* GARANTE QUE A LOGO NÃO EXCEDA */
+  object-fit: contain;
+  display: block; /* opcional, para evitar espaços em branco inline */
+}
+
+/* Ajuste de rotação para collapse-icon */
+.sidebar-section-toggle .collapse-icon {
+  transition: transform 0.2s ease;
+}
+
+/* Quando o submenu está mostrado, adicionaremos classe 'active' ao toggle para rotacionar */
+.sidebar-section-toggle.active .collapse-icon {
+  transform: rotate(180deg);
+}
+
+#sidebar ul.collapse li a {
+  padding-left: 2rem; /* ou outro valor */
+  max-width: 100%; /* GARANTE QUE NÃO EXCEDA */
+  overflow: hidden; /* ELIMINA OVERFLOW */
+  text-overflow: ellipsis; /* ADICIONA RETICÊNCIAS SE NECESSÁRIO */
+  white-space: nowrap; /* EVITA QUEBRA DE LINHA */
+}
+
+.collapse-icon.rotated {
+  transform: rotate(180deg);
+}
+
+/* =============== RESPONSIVIDADE APRIMORADA ================= */
+@media (max-width: 992px) {
+  :root {
+    --sb-w: 270px; /* REDUZ AINDA MAIS A SIDEBAR */
+  }
+  
+  .navbar-header {
+    width: calc(100vw - var(--sb-w));
+    max-width: calc(100vw - var(--sb-w));
+  }
+  
+  body.sidebar-collapsed .navbar-header {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}
+
+@media (max-width: 576px) {
+  :root {
+    --sb-w: 250px; /* REDUZ AINDA MAIS PARA SMARTPHONES */
+  }
+  
+  .sidebar-logo {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .sidebar-header h5 {
+    font-size: 1.4rem;
+  }
+  
+  #sidebar ul.collapse li a {
+    font-size: 0.9rem;
+    padding-left: 1.5rem;
+  }
+}
+
+/* =============== GARANTIAS FINAIS CONTRA OVERFLOW ================= */
+/* Força todos os elementos a respeitarem a largura da tela */
+* {
+  max-width: 100%;
+}
+
+/* Garante que imagens não causem overflow */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Força contenção de layout */
+.wrapper, #content, #iframe-dashboard-container, .navbar-header {
+  contain: layout;
+}
+
+/* Remove qualquer margin ou padding que possa causar overflow */
+body, html {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Força que elementos posicionados não excedam a viewport */
+[style*="position: fixed"], 
+[style*="position: absolute"] {
+  max-width: 100vw !important;
+}
+

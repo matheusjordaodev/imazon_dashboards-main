@@ -1,0 +1,8 @@
+.heat-legend{
+    background: transparent !important;   /* remove o fundo branco */
+    box-shadow: none !important;          /* remove a sombra */
+  }
+  /* opcional: mantém as etiquetas com leve fundo p/ leitura */
+  .heat-legend .legend-labels span{
+    background: rgba(255,255,255,.6);     /* meia-transparência */
+  }

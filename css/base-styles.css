@@ -1,0 +1,38 @@
+/* base-styles.css */
+/* scrollbar & fontes */
+html, body {
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, Helvetica, Arial, sans-serif;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+/* fundo e espaçamento geral */
+body {
+  /* Cor de fundo Cinza Claro */
+  background-color: #f0f0f0;
+  color: #333; /* Cor do texto */
+  
+  padding: 20px 0;
+}
+/* imagens e SVGs responsivos */
+img, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+/* botão custom genérico */
+.custom-button {
+  font-size: .8rem;
+}
+:root {
+  --brand:        #007560;  /* seu verde-padrão */
+  --brand-light:  #339080;  /* tom levemente mais claro */
+  --brand-dark:   #005046;  /* tom levemente mais escuro */
+}

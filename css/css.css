@@ -1,0 +1,458 @@
+<style>
+    /* Seu CSS existente... */
+    html, body {
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, Helvetica, Arial, sans-serif;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { 
+      width: 0; 
+      height: 0; 
+    }
+    body { 
+      font-family: system-ui, Helvetica, Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px 0;
+    }
+    img, canvas, svg { 
+      max-width: 100%; 
+      height: auto; 
+    }
+    .custom-button { 
+      font-size: .8rem; 
+    }
+    /* Estilos para o botão de carregar mapa */
+    #map-load-btn-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1000;
+    }
+    #load-map-btn {
+      padding: 12px 24px;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      background: linear-gradient(to bottom, #28a745, #1e7e34);
+      border: none;
+      color: white;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+    #load-map-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    /* Posicionamento relativo para o contêiner do mapa */
+    .map-container {
+      position: relative;
+      height: 450px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    /* Estilos para a barra de calor (legenda) */
+    .heat-legend {
+      position: absolute;
+      right: 10px;
+      bottom: 30px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      width: 120px;
+      text-align: center;
+    }
+    .heat-legend h4 {
+      margin: 0 0 5px;
+      font-size: 0.9rem;
+      color: #333;
+      font-weight: bold;
+    }
+    .legend-gradient {
+      height: 150px;
+      width: 25px;
+      margin: 0 auto;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+    .legend-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 150px;
+      position: absolute;
+      left: 40px;
+      top: 40px;
+      font-size: 0.8rem;
+      color: #333;
+    }
+    .legend-labels span {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 0 4px;
+      border-radius: 2px;
+    }
+    /* Estilos para os cartões */
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: none;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(to right, #2c7744, #28a745);
+      color: white;
+      font-weight: bold;
+      padding: 12px 15px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .card-body {
+      padding: 0;
+    }
+    /* Botões e controles */
+    .btn-success {
+      background: linear-gradient(to bottom, #28a745, #1e7e34);
+      border: none;
+    }
+    .btn-success:hover {
+      background: linear-gradient(to bottom, #218838, #1c7430);
+    }
+    .btn-info {
+      background: linear-gradient(to bottom, #17a2b8, #138496);
+      border: none;
+    }
+    .btn-info:hover {
+      background: linear-gradient(to bottom, #138496, #117a8b);
+    }
+    .form-select {
+      border-radius: 4px;
+      border: 1px solid #ced4da;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    /* Layout responsivo */
+    @media (max-width: 768px) {
+      .card {
+        margin-bottom: 20px;
+      }
+      .map-container {
+        height: 400px;
+      }
+    }
+    /* Estilos para o modal de seleção */
+    .settlement-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+    .settlement-item:hover {
+      background-color: #f8f9fa;
+      cursor: pointer;
+    }
+    .settlement-item.selected {
+      background-color: #e6f7ff;
+      border-left: 3px solid #1890ff;
+    }
+    .selection-info {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    .search-box {
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      padding: 10px 0;
+    }
+    .settlement-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    /* Estilos para o botão “Exibir Dados” */
+    #toggle-bar-data-btn {
+      margin: 8px;
+    }
+    #bar-data-table {
+      max-height: 300px;
+      overflow-y: auto;
+      background: white;
+      border-top: 1px solid #ddd;
+    }
+  
+  <style>
+    html, body {
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, Helvetica, Arial, sans-serif;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { 
+      width: 0; 
+      height: 0; 
+    }
+    
+    body { 
+      font-family: system-ui, Helvetica, Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px 0;
+    }
+    
+    img, canvas, svg { 
+      max-width: 100%; 
+      height: auto; 
+    }
+    
+    .custom-button { 
+      font-size: .8rem; 
+    }
+    
+    /* Estilos para o botão de carregar mapa */
+    #map-load-btn-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1000;
+    }
+    
+    #load-map-btn {
+      padding: 12px 24px;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      background: linear-gradient(to bottom, #28a745, #1e7e34);
+      border: none;
+      color: white;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+    
+    #load-map-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    /* Posicionamento relativo para o contêiner do mapa */
+    .map-container {
+      position: relative;
+      height: 450px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Estilos para a barra de calor (legenda) */
+    .heat-legend {
+      position: absolute;
+      right: 10px;
+      bottom: 30px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      width: 120px;
+      text-align: center;
+    }
+    
+    .heat-legend h4 {
+      margin: 0 0 5px;
+      font-size: 0.9rem;
+      color: #333;
+      font-weight: bold;
+    }
+    
+    .legend-gradient {
+      height: 150px;
+      width: 25px;
+      margin: 0 auto;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+    
+    .legend-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 150px;
+      position: absolute;
+      left: 40px;
+      top: 40px;
+      font-size: 0.8rem;
+      color: #333;
+    }
+    
+    .legend-labels span {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 0 4px;
+      border-radius: 2px;
+    }
+    
+    /* Estilos para os cartões */
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: none;
+      overflow: hidden;
+    }
+    
+    .card-header {
+      background: linear-gradient(to right, #2c7744, #28a745);
+      color: white;
+      font-weight: bold;
+      padding: 12px 15px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .card-body {
+      padding: 0;
+    }
+    
+    /* Botões e controles */
+    .btn-success {
+      background: linear-gradient(to bottom, #28a745, #1e7e34);
+      border: none;
+    }
+    
+    .btn-success:hover {
+      background: linear-gradient(to bottom, #218838, #1c7430);
+    }
+    
+    .btn-info {
+      background: linear-gradient(to bottom, #17a2b8, #138496);
+      border: none;
+    }
+    
+    .btn-info:hover {
+      background: linear-gradient(to bottom, #138496, #117a8b);
+    }
+    
+    .form-select {
+      border-radius: 4px;
+      border: 1px solid #ced4da;
+      box-shadow: inset  ​0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    /* Layout responsivo */
+    @media (max-width: 768px) {
+      .card {
+        margin-bottom: 20px;
+      }
+      
+      .map-container {
+        height: 400px;
+      }
+    }
+    
+    /* Estilos para o modal de seleção */
+    .settlement-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+    
+    .settlement-item:hover {
+      background-color: #f8f9fa;
+      cursor: pointer;
+    }
+    
+    .settlement-item.selected {
+      background-color: #e6f7ff;
+      border-left: 3px solid #1890ff;
+    }
+    
+    .selected-count {
+      background-color: #28a745;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 8px;
+    }
+    
+    .search-box {
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      padding: 10px 0;
+    }
+    
+    .settlement-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    
+    .selection-info {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    
+    .logo {
+      height: 60px;
+      margin-right: 15px;
+    }
+    
+    .header-title {
+      text-align: center;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-left-color: #28a745;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>

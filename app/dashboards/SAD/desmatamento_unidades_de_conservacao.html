@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>SAD – Assentamentos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<head>
+  <meta charset="utf-8" />
+  <title>SAD – Assentamentos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 1) libs CSS primeiro -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <!-- 2) seus styles em ordem lógica: 
+       base → map → button → legend → cards → controls → responsive → modal -->
+  <link rel="stylesheet" href="../../../css/base-styles.css">
+  <link rel="stylesheet" href="../../../css/map-styles.css">
+  <link rel="stylesheet" href="../../../css/button-styles.css">
+  <link rel="stylesheet" href="../../../css/legend-styles.css">
+  <link rel="stylesheet" href="../../../css/card-styles.css">
+  <link rel="stylesheet" href="../../../css/controls-styles.css">
+  <link rel="stylesheet" href="../../../css/select-styles.css">
+  <link rel="stylesheet" href="../../../css/responsive-styles.css">
+  <link rel="stylesheet" href="../../../css/modal-styles.css">
+</head>
+
+</head>
+
+<body class="py-3">
+<div class="container-fluid px-3 px-md-5" id="app-root">
+
+  <!-- toolbar principal -->
+  <div class="row mb-5 gy-2 align-items-center">
+    <div class="col-auto">
+      <button id="reset-btn" class="btn btn-success btn-sm custom-button">
+        <i class="fa fa-filter me-1"></i>Remover Filtros
+      </button>
+    </div>
+    <div class="col-auto">
+      <button id="state-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#state-modal">
+        <i class="fa fa-map me-1"></i>Selecione o Estado
+      </button>
+    </div>
+    <div class="col-auto">
+      <button id="download-btn-open" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#download-modal">
+        <i class="fa fa-download me-1"></i>Baixar CSV
+      </button>
+    </div>
+    <div class="col-auto d-flex align-items-center">
+     <button id="interest-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#interest-modal">
+    Selecionar Área de Interesse
+  </button>
+      <label for="year-select" class="me-2 mb-0 fw-bold">Ano:</label>
+      <select id="year-select" class="form-select form-select-sm year-select"></select>
+    </div>
+  </div>
+
+
+  <!-- barra + mapa -->
+  <div class="row gx-2 mb-4">
+    <div class="col-12 col-md-6 mb-4 mb-md-0">
+      <div class="card h-100">
+        <div class="card-header">Alerta de Desmatamento Acumulados Unidades de Conservacao</div>
+        <div class="card-body p-0"><div id="bar-settlement" style="height:450px"></div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card h-100">
+        <div class="card-header" id="map-title">Mapa de Desmatamento (km²)</div>
+        <div class="card-body p-0 map-container">
+          <div id="map-graph" style="height:100%"></div>
+          <div id="map-load-btn-container">
+            <button id="load-map-btn" class="btn btn-success"><i class="fas fa-map me-2"></i>Carregar Mapa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- série histórica + anual -->
+  <div class="row gx-2 mb-5">
+    <!-- série temporal -->
+    <div class="col-12 col-md-6 mb-4 mb-md-0">
+      <div class="card h-100">
+        <div class="card-header">
+           Alertas de Desmatamento Acumulado – Unidades por Estado
+        </div>
+        <div class="card-body p-0"><div id="line-graph" style="height:450px"></div></div>
+      </div>
+    </div>
+
+    <!-- gráfico anual -->
+    <div class="col-12 col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Alerta de Desmatamento acumulados - Amazônia Legal</div>
+        <div class="card-body p-0"><div id="yearly-graph" style="height:450px"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ─── MODAIS ─────────────────────────────────────────────────── -->
+<!-- estados -->
+<div class="modal fade" id="state-modal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Escolha os Estados</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><select id="state-select" class="form-select" multiple size="8"></select></div>
+    <div class="modal-footer"><button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button></div>
+  </div></div>
+</div>
+
+<!-- download -->
+<div class="modal fade" id="download-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Configurações de Download</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div id="download-state-checklist" class="mb-3"></div><hr>
+      <div class="mb-2">
+        <label class="me-2">Separador decimal</label>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="dec-sep" id="dec-dot" value="." checked>
+          <label class="form-check-label" for="dec-dot">Ponto</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value=",">
+          <label class="form-check-label" for="dec-comma">Vírgula</label>
+        </div>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="remove-accents">
+        <label class="form-check-label" for="remove-accents">Sem acentuação</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="download-btn" class="btn btn-success me-2">Download</button>
+      <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- áreas de interesse -->
+<div class="modal fade" id="interest-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Selecionar Áreas de Interesse</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="search-box"><input type="text" id="settlement-search" class="form-control" placeholder="Buscar assentamento…"></div>
+      <div class="selection-info"><span id="selected-count">0</span> selecionados</div>
+      <div id="settlement-list" class="settlement-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="clear-selection" class="btn btn-outline-secondary">Limpar Seleção</button>
+      <button id="apply-selection" class="btn btn-success">Aplicar Seleção</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- libs JS -->
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ─── SCRIPT PRINCIPAL ───────────────────────────────────────── -->
+<script type="module">
+(async () => {
+  /* ─── constantes ─── */
+  const GEOJSON_URL = "/dataset/sad/geojson/AMZ_unidade_conservacao.geojson";
+  const CSV_URL     = "/dataset/sad/csv/alertas_sad_desmatamento_08_2008_04_2024_unidadeConservacao.csv";
+  const normUF      = s => (s||'').toString().toUpperCase();
+  const CSV_UF_KEY  = 'ESTADO';
+const BRAZIL_BOUNDS = L.latLngBounds(
+  L.latLng(-34.0, -74.0),   // sudoeste
+  L.latLng(  5.5, -34.0)    // nordeste
+);
+/* download */
+const downloadBtn         = document.getElementById('download-btn');
+const downloadStateBox    = document.getElementById('download-state-checklist');
+const decSepRadioSelector = 'input[name="dec-sep"]:checked';
+const removeAccentsChk    = document.getElementById('remove-accents');
+
+  /* ─── DOM ─── */
+  const stateBtn        = document.getElementById('state-btn');
+  const stateSelect     = document.getElementById('state-select');
+  const resetBtn        = document.getElementById('reset-btn');
+  const yearSelect      = document.getElementById('year-select');
+  
+  const loadMapBtn      = document.getElementById('load-map-btn');
+  const mapBtnContainer = document.getElementById('map-load-btn-container');
+  const settlementList  = document.getElementById('settlement-list');
+  const settlementSearch= document.getElementById('settlement-search');
+  const selectedCount   = document.getElementById('selected-count');
+  const clearSel        = document.getElementById('clear-selection');
+  const applySel        = document.getElementById('apply-selection');
+
+  /* ─── estado global ─── */
+  let geojson, NAME_KEY='UNID_CONSE';
+  let df=[];
+  let years=[], ufs=[], allSet=[];
+  let selUF=[], selCat='', selSet=[];
+  let curYear;
+  let barSet=[];
+  let mapInit=false, leafletMap, geoLayer, legend;
+
+  /* ─── carregamento ─── */
+  async function loadGeo(){ geojson = await (await fetch(GEOJSON_URL)).json(); }
+  async function loadCsv(){
+    const txt = await (await fetch(CSV_URL)).text();
+    df = d3.csvParse(txt, d => ({
+      ...d,
+      ANO     : +d.ANO     || null,
+      AREAKM2 : +d.AREAKM2 || 0,
+      [CSV_UF_KEY]: normUF(d[CSV_UF_KEY])
+    }));
+  }
+
+  /* ─── filtros init ─── */
+  function buildFilters(){
+    years=[...new Set(df.map(d=>d.ANO))].sort((a,b)=>a-b);
+    curYear=Math.max(...years);
+    yearSelect.innerHTML=years.map(y=>`<option>${y}</option>`).join('');
+    yearSelect.value=curYear;
+
+    /* categorias (se existirem) */
+
+
+    /* UFs – união CSV + GeoJSON */
+    const geoUF=[...new Set(
+      geojson.features
+             .map(f=>normUF(f.properties.UF||f.properties.uf))
+             .filter(Boolean)
+    )];
+    const csvUF=[...new Set(df.map(d=>d[CSV_UF_KEY]).filter(Boolean))];
+    ufs=[...new Set([...geoUF,...csvUF])].sort();
+    stateSelect.innerHTML=ufs.map(u=>`<option value="${u}">${u}</option>`).join('');
+
+    /* assentamentos */
+    allSet=[...new Set(df.map(d=>d.UNID_CONSE))].sort();
+    buildDownloadChecklist();   // 💾 preenche modal de download
+
+  }
+
+  function updateStateBtn(){
+    if(!selUF.length) stateBtn.innerHTML='<i class="fa fa-map me-1"></i>Selecione o Estado';
+    else if(selUF.length===1) stateBtn.innerHTML=`<i class="fa fa-map me-1"></i>UF: ${selUF[0]}`;
+    else stateBtn.innerHTML=`<i class="fa fa-map me-1"></i>${selUF.length} UFs`;
+  }
+
+  /* ─── dataset filtrado (por ANO + seleções) ─── */
+  function base(){
+    const y=+yearSelect.value;
+    
+    selUF=Array.from(stateSelect.selectedOptions).map(o=>o.value);
+    updateStateBtn();
+    let out=df.filter(d=>d.ANO===y)
+              .filter(d=>!selUF.length||selUF.includes(d[CSV_UF_KEY]));
+    if(selSet.length) out=out.filter(d=>selSet.includes(d.UNID_CONSE));
+    return out;
+  }
+
+  /* ─── gráfico barra ─── */
+  function plotBar() {
+  const data = base();
+
+  // 1) soma área por unidade
+  const agg = d3.rollup(
+    data,
+    v => d3.sum(v, d => d.AREAKM2),
+    d => d.UNID_CONSE
+  );
+
+  // 2) array ordenado
+  let arr = [...agg]
+    .map(([UNID_CONSE, area]) => ({ UNID_CONSE, area }))
+    .sort((a, b) => b.area - a.area);
+
+  if (selSet.length)      arr = arr.filter(d => selSet.includes(d.UNID_CONSE));
+  else                    arr = arr.slice(0, 10);
+
+  barSet = arr.map(d => d.UNID_CONSE);
+
+  // valor máximo para definir limite
+  const maxVal = arr.length ? d3.max(arr, d => d.area) : 1;
+  // threshold a partir do qual o texto entra na barra (por exemplo 15% do máximo)
+  const thresh = maxVal * 0.15;
+
+  // gera posições: se a barra < thresh → 'outside', senão 'inside'
+  const positions = arr.map(d => d.area < thresh ? 'outside' : 'inside');
+  // e cor do texto: se dentro, branco; se fora, preto
+  const textColor = arr.map(d => d.area < thresh ? '#000' : '#fff');
+
+  const leftMargin = Math.min(300, 40 + Math.max(...arr.map(d => d.UNID_CONSE.length)) * 6);
+
+  Plotly.newPlot('bar-settlement', [{
+    x: arr.map(d => d.area),
+    y: arr.map(d => d.UNID_CONSE),
+    type: 'bar',
+    orientation: 'h',
+    marker: { color: '#28a745', opacity: 0.8, line: { color: '#1e7e34', width: 1 } },
+
+    // texto e posicionamento dinâmico
+    text: arr.map(d => d.area.toFixed(2)),
+    textposition: positions,
+    textfont: { color: textColor, size: 12 }
+  }], {
+    title: { text: `Área (${yearSelect.value}) – Unidades`, x: 0.5 },
+    margin: { l: leftMargin, r: 10, t: 50, b: 30 },
+    height: 450,
+    yaxis: { automargin: true },
+    xaxis: { title: 'Área (km²)' },
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    paper_bgcolor: 'rgba(0,0,0,0)'
+  }, {
+    displayModeBar: false,
+    responsive: true
+  });
+}
+
+  /* ─── mapa ─── */
+  function initMap() {
+  if (mapInit) return;
+
+  leafletMap = L.map('map-graph', {
+    zoomSnap: .30,
+    attributionControl: false,
+    maxBounds: BRAZIL_BOUNDS,        // ← trava dentro do Brasil
+    maxBoundsViscosity: 1.0          // “puxa” de volta se tentar sair
+  })
+  .setView([-14, -55], 4);           // centro aproximado
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom: 18 }
+  ).addTo(leafletMap);
+
+  legend = L.DomUtil.create('div', 'heat-legend');
+  legend.style.display = 'none';
+  leafletMap.getContainer().appendChild(legend);
+
+  mapInit = true;
+}
+
+  /* ─── LEGEND (corrigido) ───────────────────────────────────────── */
+function heatLegend(min, max, scale) {
+  legend.innerHTML = `
+    <h4>Área&nbsp;(km²)</h4>
+    <div class="legend-gradient"></div>
+    <div class="legend-labels">
+      <span>${max.toLocaleString()}</span>
+      <span>${((max + min) / 2).toLocaleString()}</span>
+      <span>${min.toLocaleString()}</span>
+    </div>`;
+
+  /* agora o topo (100 %) recebe o valor MÁXIMO → vermelho,
+     e o rodapé (0 %) recebe o valor MÍNIMO → branco/amarelo */
+  legend.querySelector('.legend-gradient').style.background =
+    `linear-gradient(to top,
+       ${scale(min)} 0%,
+       ${scale((max + min) / 2)} 50%,
+       ${scale(max)} 100%)`;
+
+  legend.style.display = 'block';
+}
+
+  function plotMap(){
+      document.getElementById('map-title').textContent =`Mapa de Desmatamento (km²) ${yearSelect.value}`;
+
+    if(!mapInit) return;
+    const data=base();
+    const agg=d3.rollup(data,
+      v=>d3.sum(v,d=>d.AREAKM2),
+      d=>d[NAME_KEY]
+    );
+    const show=selSet.length?selSet:barSet;
+    const maxArea=d3.max(show,a=>agg.get(a)||0)||1;
+    const color=d3.scaleSequential().domain([0,maxArea]).interpolator(d3.interpolateYlOrRd);
+    heatLegend(0,maxArea,color);
+    if(geoLayer) geoLayer.remove();
+    geoLayer=L.geoJSON(geojson,{
+      coordsToLatLng:c=>L.latLng(c[1],c[0]),
+      filter:f=>show.includes(f.properties[NAME_KEY]),
+      style:f=>({
+        weight:1.2,color:'#555',fillOpacity:.75,
+        fillColor:color(agg.get(f.properties[NAME_KEY])||0)
+      }),
+      onEachFeature:(f,layer)=>{
+        const nome=f.properties[NAME_KEY];
+        const km2Csv=agg.get(nome);
+        const haPoly=+f.properties.area_hecta ||0;
+        const ha=km2Csv!==undefined?km2Csv*1000:haPoly;
+        layer.bindTooltip(`<strong>${nome}</strong><br>${ha.toLocaleString('pt-BR',{maximumFractionDigits:2})} km²`,{sticky:true});
+        layer.on({
+          mouseover:e=>e.target.setStyle({weight:2,color:'#000'}).bringToFront(),
+          mouseout:e=>geoLayer.resetStyle(e.target),
+          click:e=>leafletMap.fitBounds(e.target.getBounds(),{maxZoom:10})
+        });
+      }
+    }).addTo(leafletMap);
+    if(geoLayer.getLayers().length){
+      const b=geoLayer.getBounds();
+      leafletMap.fitBounds(b);
+      if(leafletMap.getZoom()>8) leafletMap.setZoom(8);
+    }
+  }
+
+  /* ─── série temporal ─── */
+  function plotLine(){
+    const fil=df.filter(d=>
+      (!selCat||d.categoria===selCat) &&
+      (!selUF.length||selUF.includes(d[CSV_UF_KEY])) &&
+      (!selSet.length||selSet.includes(d.UNID_CONSE))
+    );
+    const by=d3.rollup(fil,
+      v=>d3.sum(v,d=>d.AREAKM2),
+      d=>d.UNID_CONSE,
+      d=>d.ANO
+    );
+    const pal=d3.schemeTableau10;
+    const show=selSet.length?selSet:(barSet.length?barSet:[...by.keys()]);
+    const series=show.map((s,i)=>{
+      const mp=by.get(s); if(!mp) return null;
+      const yrs=[...mp.keys()].sort((a,b)=>a-b);
+      return{
+        name:s,x:yrs,y:yrs.map(y=>mp.get(y)),
+        mode:'lines+markers',
+        line:{width:2,color:pal[i%pal.length]},
+        marker:{size:8,color:pal[i%pal.length]}
+      };
+    }).filter(Boolean);
+    Plotly.newPlot('line-graph', series, {
+  title: {
+    text: `Série Histórica – ${selCat||'Todas'}`,
+    x: .5,
+    font: { size: 16 }
+  },
+  xaxis: { title: 'Ano' },
+  yaxis: { title: 'Área (km²)' },
+
+  legend: {
+    orientation: 'h',      // horizontal
+    x: 0.5,                // centro horizontal
+    xanchor: 'center',
+    y: -0.25,              // tira a legenda pra baixo do eixo
+    yanchor: 'top',
+    font: { size: 12 },
+    traceorder: 'normal',
+    itemclick: 'toggle'
+  },
+
+  margin: {
+    l: 50,
+    r: 20,
+    t: 50,
+    b: 100   // espaço extra embaixo pra caber a legenda
+  },
+
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  paper_bgcolor: 'rgba(0,0,0,0)'
+}, {
+  displayModeBar: false,
+  responsive: true
+});
+
+
+
+  }
+
+  /* ─── gráfico anual ─── */
+function plotYearly() {
+  const dat = df.filter(d =>
+    (!selCat || d.categoria === selCat) &&
+    (!selUF.length || selUF.includes(d[CSV_UF_KEY])) &&
+    (!selSet.length || selSet.includes(d.UNID_CONSE))
+  );
+
+  const agg = d3.rollup(
+    dat,
+    v => d3.sum(v, d => d.AREAKM2),
+    d => d.ANO
+  );
+
+  const anos = [...agg.keys()].sort((a, b) => a - b);
+  const val  = anos.map(a => agg.get(a) || 0);
+
+  Plotly.newPlot('yearly-graph', [{
+    x: anos,
+    y: val,                            // ← usar 'val', não 'valores'
+    type: 'bar',
+    marker: { color: 'rgba(40,167,69,0.7)', line: { width: 1, color: '#1e7e34' } },
+
+    // mostra o valor em cima de cada barra
+    text: val.map(v => v.toFixed(2)),  // ← usar 'val' aqui também
+    textposition: 'outside',
+    textfont: { size: 12 }
+  }], {
+    title: { text: 'Área Total por Ano', x: 0.5 },
+    xaxis: { title: 'Ano' },
+    yaxis: { title: 'Área (km²)' },
+    margin: { l: 50, r: 10, t: 50, b: 40 },
+    height: 450,
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    paper_bgcolor: 'rgba(0,0,0,0)'
+  }, {
+    displayModeBar: false,
+    responsive: true
+  });
+}
+
+
+  /* ─── lista de assentamentos ─── */
+  function refreshList(){
+    const term=(settlementSearch.value||'').toLowerCase();
+    settlementList.innerHTML=allSet
+      .filter(a=>a.toLowerCase().includes(term))
+      .map(a=>`<div class="settlement-item ${selSet.includes(a)?'selected':''}" data-name="${a}">${a}</div>`)
+      .join('');
+    selectedCount.textContent=selSet.length;
+    settlementList.querySelectorAll('.settlement-item').forEach(el=>{
+      el.onclick=()=>{
+        const n=el.dataset.name;
+        const ix=selSet.indexOf(n);
+        if(ix===-1) selSet.push(n); else selSet.splice(ix,1);
+        refreshList();
+      };
+    });
+  }
+
+  /* ------------- cria a checklist de UFs para download ------------- */
+function buildDownloadChecklist() {
+  downloadStateBox.innerHTML = ufs.map(uf => `
+    <div class="form-check form-check-inline mb-1">
+      <input class="form-check-input dl-uf" type="checkbox" id="dl-${uf}" value="${uf}">
+      <label class="form-check-label" for="dl-${uf}">${uf}</label>
+    </div>
+  `).join('');
+}
+
+/* remove acentos, se o usuário pedir */
+function stripAccents(txt) {
+  return txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/* converte objeto → linha CSV; ponto-ou-vírgula para números */
+function objToCsvRow(obj, headers, decSep, noAcc) {
+  return headers.map(h => {
+    let v = obj[h] ?? '';
+    if (typeof v === 'string') v = noAcc ? stripAccents(v) : v;
+    if (typeof v === 'number' && decSep === ',')
+      v = v.toString().replace('.', ',');
+    return `"${String(v).replace(/"/g, '""')}"`;   // escapa aspas
+  }).join(';');                                    // separador de coluna
+}
+
+  /* ─── eventos ─── */
+  [yearSelect,stateSelect].forEach(el=>
+    el.onchange=()=>{plotBar();plotMap();plotLine();plotYearly();}
+  );
+
+  resetBtn.onclick=()=>{
+    stateSelect.selectedIndex=-1; selUF=[];
+    yearSelect.value=curYear; selSet=[];
+    updateStateBtn();
+    plotBar(); plotMap(); plotLine(); plotYearly();
+  };
+
+  loadMapBtn.onclick=()=>{initMap();plotMap();mapBtnContainer.style.display='none';};
+
+  settlementSearch.oninput=refreshList;
+  clearSel.onclick=()=>{selSet=[];refreshList();};
+  applySel.onclick=()=>{
+    bootstrap.Modal.getInstance(document.getElementById('interest-modal')).hide();
+    plotBar(); plotMap(); plotLine(); plotYearly();
+  };
+  /* ------------------------- download CSV ------------------------- */
+downloadBtn.onclick = () => {
+  /* 1. quais UFs o usuário marcou?  (vazio = todas) */
+  const selUFs = Array.from(document.querySelectorAll('.dl-uf:checked'))
+                      .map(el => el.value);
+
+  /* 2. opções do pop-up */
+  const decSep = document.querySelector(decSepRadioSelector)?.value || '.';
+  const noAcc  = removeAccentsChk.checked;
+
+  /* 3. linhas filtradas */
+  const rows = df.filter(d => !selUFs.length || selUFs.includes(d[CSV_UF_KEY]));
+
+  if (!rows.length) {
+    alert('Nenhum registro encontrado para as UFs selecionadas.');
+    return;
+  }
+
+  /* 4. gera CSV */
+  const headers = Object.keys(rows[0]);
+  const csvLines = [
+    headers.join(';'),
+    ...rows.map(r => objToCsvRow(r, headers, decSep, noAcc))
+  ].join('\n');
+
+  /* 5. cria Blob e dispara download */
+  const blob = new Blob([csvLines], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `alertas_degradacao_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+};
+
+
+  /* ─── inicialização ─── */
+  try{
+    await Promise.all([loadGeo(),loadCsv()]);
+
+    /* identifica coluna de nome no GeoJSON */
+    {
+      const sample=geojson.features[0]?.properties||{};
+      if(!('UNID_CONSE' in sample)){
+        if('nome_uc' in sample) NAME_KEY='nome_uc';
+        else{
+          const alt=Object.keys(sample).find(k=>k.toLowerCase().startsWith('nome'));
+          if(alt) NAME_KEY=alt;
+        }
+      }
+      console.log('Campo-nome usado no GeoJSON →',NAME_KEY);
+    }
+
+    /* garante campo NAME_KEY também no CSV (para filtros) */
+    if(NAME_KEY!=='UNID_CONSE'){
+      df.forEach(d=>{ d[NAME_KEY]=d.UNID_CONSE; });
+    }
+
+    buildFilters(); updateStateBtn(); refreshList();
+    plotBar(); plotLine(); plotYearly();
+
+  }catch(e){
+    console.error(e);
+    document.getElementById('app-root').insertAdjacentHTML(
+      'afterbegin',`<div class="alert alert-danger">Erro: ${e.message}</div>`
+    );
+  }
+})();
+</script>
+</body>
+</html>

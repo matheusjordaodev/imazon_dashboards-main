@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard de Desmatamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- ── CSS / LIBS ──────────────────────────────────────────── -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+
+  <!-- (mantém outras folhas externas se você as usa) -->
+  <link rel="stylesheet" href="../../../css/base-styles.css">
+
+  <!-- ── CSS AUTORAL (antes inline) ──────────────────────────── -->
+  <link rel="stylesheet" href="../../css/dashboard_ameaca_terras_indigenas.css">
+</head>
+<body>
+
+  <!-- ==========================================================
+       HEADER / BANNER
+  ========================================================== -->
+  <header class="header d-flex flex-column align-items-center mb-4">
+    <!-- logotipo -->
+    <img src="../../../img/ameaca_e_pressao.png"
+         class="header-logo" alt="FloreSer" style="max-width:160px">
+    <!-- subtítulo -->
+    <p class="subtitle fw-semibold text-center mt-2">
+      Análise de Área Acumulada na Amazônia Legal
+    </p>
+    <!-- <h1> escondido p/ SEO  -->
+    <h1 class="sr-only">FloreSer</h1>
+  </header>
+
+  <!-- ==========================================================
+       CONTEÚDO PRINCIPAL
+  ========================================================== -->
+  <div class="container-fluid py-3">
+
+    <!-- ---------------- FILTROS -------------------------------->
+    <div class="row g-2 align-items-end mb-4">
+
+      <div class="col-12 col-md-auto">
+        <label class="fw-bold">MODALIDADE</label>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="modalidade-filter" class="form-select w-100">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-auto">
+        <label class="fw-bold">USO</label>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="uso-filter" class="form-select w-100">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-auto">
+        <label class="fw-bold">UF</label>
+      </div>
+      <div class="col-12 col-md-2">
+        <select id="uf-filter" class="form-select w-100">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div class="col-6 col-md-auto">
+        <button id="reset-btn" class="btn btn-success btn-sm w-100 w-md-auto">
+          <i class="fa fa-filter me-1"></i>Remover Filtros
+        </button>
+      </div>
+
+      <div class="col-6 col-md-auto">
+        <button id="download-btn" class="btn btn-success btn-sm w-100 w-md-auto">
+          <i class="fa fa-download me-1"></i>Baixar CSV
+        </button>
+      </div>
+    </div>
+    <!-- /FILTROS ------------------------------------------------->
+
+
+    <!-- ---------------- MAPA + GRÁFICO DE BARRAS -------------- -->
+    <div class="row gx-2 mb-4">
+
+      <!-- MAPA -->
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100">
+          <div class="card-header">Mapa de Áreas Protegidas</div>
+          <div class="card-body p-0">
+            <div class="map-container">
+              <div id="map"></div>
+              <div id="legend-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRA -->
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-header">Áreas mais Desmatadas</div>
+          <div class="card-body">
+            <div class="loading-overlay">
+              <div id="bar-chart" style="height:450px"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /MAPA + BAR --------------------------------------------->
+
+
+    <!-- ---------------- DONUTS --------------------------------- -->
+    <div class="row gx-2 mb-4">
+
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100">
+          <div class="card-header">Ameaça por Estado</div>
+          <div class="card-body">
+            <div class="loading-overlay">
+              <div id="pie1" style="height:400px"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-header">Ameaça por Área de Proteção</div>
+          <div class="card-body">
+            <div class="loading-overlay">
+              <div id="pie2" style="height:400px"></div>
+              <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Carregando…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /DONUTS -------------------------------------------------->
+
+
+    <!-- ---------------- TABELA --------------------------------- -->
+    <div class="row gx-2 mb-5">
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-header">Áreas Protegidas Mais Afetadas</div>
+          <div class="card-body">
+            <div class="dash-table-container">
+              <div class="loading-overlay">
+
+                <table id="top-table" class="display compact w-100">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Focos de Calor</th>
+                      <th>Número de CAR</th>
+                      <th>Área de CAR (km²)</th>
+                      <th>Estradas Não Oficiais (km)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+
+                <div class="loading-spinner">
+                  <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Carregando…</span>
+                  </div>
+                </div>
+              </div><!-- /.loading-overlay -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /TABELA -------------------------------------------------->
+
+  </div><!-- /.container-fluid -->
+
+
+  <!-- ── LIBS JS ──────────────────────────────────────────────── -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- ── JS AUTORAL -------------------------------------------- -->
+  <script src="../../js/dashboard_ameaca_ti.js"></script>
+</body>
+</html>

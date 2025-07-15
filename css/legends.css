@@ -1,0 +1,24 @@
+.legend {
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  line-height: 1.5;
+}
+.legend h4 {
+  margin: 0 0 5px;
+  font-size: 0.9rem;
+}
+.legend-gradient {
+  height: 100px;
+  width: 20px;
+  margin: 0 auto;
+}
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+.legend-labels span {
+  font-size: 0.8rem;
+}

@@ -1,0 +1,41 @@
+/* chart-styles.css */
+
+/* Container do gráfico: garante largura total e altura mínima */
+#bar-chart {
+  width: 100%;
+  /* Altura mínima para desktop */
+  min-height: 450px;
+}
+
+/* Em telas menores, ajustar altura para ser proporcional */
+@media (max-width: 768px) {
+  #bar-chart {
+    /* Altura menor em mobile */
+    min-height: 280px;
+  }
+}
+
+/* Opcional: estilo para texto dentro das barras (Plotly tende a aplicar inline, mas podemos definir fonte padrão) */
+.plotly .bartext {
+  font-family: system-ui, Arial, sans-serif;
+}
+
+/* Loading overlay: posiciona spinner sobre o gráfico */
+.loading-overlay {
+  position: relative;
+}
+
+/* Spinner centralizado */
+.loading-overlay .loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  /* O tamanho do spinner já vem do Bootstrap */
+}
+
+
+.loading-overlay.loading {
+  background: rgba(255, 255, 255, 0.7);
+}

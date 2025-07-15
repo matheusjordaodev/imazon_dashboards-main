@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>SIMEX - Unidades de Conservação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- ─── ESTILOS ────────────────────────────────────────────────── -->
+  
+
+  <!-- libs CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+      <link rel="stylesheet" href="../../../css/base-styles.css">
+  <link rel="stylesheet" href="../../../css/map-styles.css">
+  <link rel="stylesheet" href="../../../css/button-styles.css">
+  <link rel="stylesheet" href="../../../css/legend-styles.css">
+  <link rel="stylesheet" href="../../../css/card-styles.css">
+  <link rel="stylesheet" href="../../../css/controls-styles.css">
+  <link rel="stylesheet" href="../../../css/select-styles.css">
+  <link rel="stylesheet" href="../../../css/responsive-styles.css">
+  <link rel="stylesheet" href="../../../css/modal-styles.css">
+</head>
+
+<body class="py-3">
+  <div class="container-fluid px-3 px-md-5" id="app-root">
+
+    <!-- toolbar filtros + anos + categoria -->
+    <div class="row mb-4 gy-2 align-items-end">
+      <div class="col-auto">
+        <button id="reset-btn" class="btn btn-success btn-sm custom-button">
+          <i class="fa fa-filter me-1"></i>Remover Filtros
+        </button>
+      </div>
+      <div class="col-auto">
+        <button id="state-btn" class="btn btn-success btn-sm custom-button"
+                data-bs-toggle="modal" data-bs-target="#state-modal">
+          <i class="fa fa-map me-1"></i>Selecione o Estado
+        </button>
+      </div>
+      <div class="col-auto">
+        <button id="download-btn-open" class="btn btn-success btn-sm custom-button"
+                data-bs-toggle="modal" data-bs-target="#download-modal">
+          <i class="fa fa-download me-1"></i>Baixar CSV
+        </button>
+      </div>
+      <div class="col-auto">
+        <button id="interest-btn" class="btn btn-success btn-sm custom-button"
+                data-bs-toggle="modal" data-bs-target="#interest-modal">
+          Selecionar UCs de Interesse
+        </button>
+      </div>
+      <div class="col-auto">
+        <label class="mb-0 fw-bold me-2">Ano Início:</label>
+        <select id="start-year-select" class="form-select form-select-sm"></select>
+      </div>
+      <div class="col-auto">
+        <label class="mb-0 fw-bold me-2">Ano Fim:</label>
+        <select id="end-year-select" class="form-select form-select-sm"></select>
+      </div>
+      <div class="col-auto">
+        <label class="mb-0 fw-bold me-2">Categoria:</label>
+        <select id="category-select" class="form-select form-select-sm"></select>
+      </div>
+    </div>
+
+    <!-- barra + mapa -->
+    <div class="row gx-2 mb-4">
+      <div class="col-12 col-md-6 mb-4 mb-md-0">
+        <div class="card h-100">
+          <div class="card-header">Área Acumulada de Exploração Madeireira – Top 10 UCs</div>
+          <div class="card-body p-0">
+            <div id="bar-settlement" style="height:450px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-header" id="map-title">Mapa de Degradação (ha)</div>
+          <div class="card-body p-0 map-container">
+            <div id="map-graph" style="height:100%;"></div>
+            <div id="map-load-btn-container">
+              <button id="load-map-btn" class="btn btn-success">
+                <i class="fas fa-map me-2"></i>Carregar Mapa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- série histórica -->
+    <div class="row gx-2 mb-5">
+      <div class="col-12">
+        <div class="card h-100">
+          <div class="card-header">Série Histórica</div>
+          <div class="card-body p-0">
+            <div id="line-graph" style="height:450px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <!-- ─── MODAIS ─────────────────────────────────────────────────── -->
+  <!-- Seleção de Estados -->
+  <div class="modal fade" id="state-modal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Escolha os Estados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <select id="state-select" class="form-select" multiple size="8"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Configurações de Download -->
+  <div class="modal fade" id="download-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configurações de Download</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="download-state-checklist" class="mb-3"></div>
+        <hr>
+        <div class="mb-2">
+          <label class="me-2">Separador decimal</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="dec-sep" id="dec-dot" value="." checked>
+            <label class="form-check-label" for="dec-dot">Ponto</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value=",">
+            <label class="form-check-label" for="dec-comma">Vírgula</label>
+          </div>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="remove-accents">
+          <label class="form-check-label" for="remove-accents">Sem acentuação</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="download-btn" class="btn btn-success me-2">Download</button>
+        <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Seleção de UCs de Interesse -->
+  <div class="modal fade" id="interest-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar UCs de Interesse</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box">
+          <input type="text" id="settlement-search" class="form-control" placeholder="Buscar UC…">
+        </div>
+        <div class="selection-info">
+          <span id="selected-count">0</span> de 10 selecionados
+        </div>
+        <div id="settlement-list" class="settlement-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="clear-selection" class="btn btn-outline-secondary">Limpar Seleção</button>
+        <button id="apply-selection" class="btn btn-success">Aplicar Seleção</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- libs JS -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- ─── SCRIPT PRINCIPAL ───────────────────────────────────────── -->
+  <script type="module">
+  (async () => {
+    /* ----------------- CONSTANTES ----------------- */
+    const GEOJSON_URL = "https://cdn.jsdelivr.net/gh/imazon-cgi/simex@main/datasets/geojson/simex_amazonia_PAMT2007_2023_TerrasNDest.geojson";
+    const CSV_URL = new URL("/dataset/simex/csv/simex_amazonia_PAMT2007_2023_TerrasNDest.csv", window.location.origin).href;
+
+    /* --------------- ELEMENTOS DOM --------------- */
+    const stateSelect       = document.getElementById('state-select');
+    const resetBtn          = document.getElementById('reset-btn');
+    const startYearSelect   = document.getElementById('start-year-select');
+    const endYearSelect     = document.getElementById('end-year-select');
+    const categorySelect    = document.getElementById('category-select');
+    const loadMapBtn        = document.getElementById('load-map-btn');
+    const mapBtnContainer   = document.getElementById('map-load-btn-container');
+    const interestBtn       = document.getElementById('interest-btn');
+    const settlementSearch  = document.getElementById('settlement-search');
+    const settlementList    = document.getElementById('settlement-list');
+    const selectedCount     = document.getElementById('selected-count');
+    const clearSelection    = document.getElementById('clear-selection');
+    const applySelection    = document.getElementById('apply-selection');
+    const downloadStateBox  = document.getElementById('download-state-checklist');
+    const downloadBtn       = document.getElementById('download-btn');
+    const decSepSelector    = 'input[name="dec-sep"]:checked';
+    const removeAccentsChk  = document.getElementById('remove-accents');
+
+    /* ----------------- ESTADO ------------------ */
+    let geojson, df = [];
+    let listStates = [], listYears = [], allSettlements = [];
+    let barSettlements = [];
+    let selectedStates = [], selectedCategory = '', selectedSettlements = [];
+    let currentYear;
+    let leafletMap, geoLayer, legendContainer;
+    let mapInitialized = false;
+
+    /* ----------------- LOADERS ----------------- */
+    async function loadGeoJSON() {
+      const resp = await fetch(GEOJSON_URL);
+      if (!resp.ok) throw new Error(`GeoJSON: ${resp.status}`);
+      geojson = await resp.json();
+    }
+    async function loadCSV() {
+      const resp = await fetch(CSV_URL);
+      if (!resp.ok) throw new Error(`CSV: ${resp.status}`);
+      const text = await resp.text();
+      df = d3.csvParse(text, d => ({
+        ...d,
+        ano     : d.ano !== '' ? +d.ano : null,
+        area_ha : d.area_ha !== '' ? +d.area_ha : 0,
+        sigla_uf: (d.sigla_uf||'').toUpperCase(),
+        nome  : d.nome
+      }));
+      listStates  = [...new Set(df.map(d => d.sigla_uf))].sort();
+      listYears   = [...new Set(df.map(d => d.ano))].sort((a,b)=>a-b);
+      allSettlements = [...new Set(df.map(d => d.nome))].sort();
+      currentYear = Math.max(...listYears);
+    }
+
+    /* ------------------ FILTROS ------------------ */
+    function buildFilters() {
+      // Estados
+      stateSelect.innerHTML = listStates.map(s =>
+        `<option value="${s}">${s}</option>`).join('');
+      // Anos
+      startYearSelect.innerHTML = listYears.map(y => `<option>${y}</option>`).join('');
+      endYearSelect.innerHTML   = listYears.map(y => `<option>${y}</option>`).join('');
+      startYearSelect.value = listYears[0];
+      endYearSelect.value   = listYears.at(-1);
+      // Categorias
+      const cats = [
+        {label:'Todas',value:''},
+        {label:'Não autorizada',value:'não autorizada'},
+        {label:'Autorizada',value:'autorizada'},
+        {label:'Análise',value:'análise'}
+      ];
+      categorySelect.innerHTML = cats.map(o =>
+        `<option value="${o.value}">${o.label}</option>`).join('');
+    }
+
+    /* ----------- BASE PARA FILTRO ----------- */
+    function filtroBase() {
+      const start = +startYearSelect.value;
+      const end   = +endYearSelect.value;
+      selectedCategory = categorySelect.value;
+      selectedStates   = Array.from(stateSelect.selectedOptions).map(o=>o.value);
+      let out = df.filter(d=>d.ano>=start&&d.ano<=end)
+                  .filter(d=>!selectedCategory||d.categoria===selectedCategory)
+                  .filter(d=>!selectedStates.length||selectedStates.includes(d.sigla_uf));
+      if (selectedSettlements.length) {
+        out = out.filter(d=>selectedSettlements.includes(d.nome));
+      }
+      return out;
+    }
+
+    /* ----------- GRÁFICO BARRAS ----------- */
+/* ----------- GRÁFICO BARRAS ----------- */
+function plotSettlement() {
+  const data = filtroBase();
+  const bynome = d3.rollup(
+    data,
+    v => d3.sum(v, d => d.area_ha),
+    d => d.nome  // ou d.nome no outro exemplo
+  );
+  let arr = Array.from(bynome, ([nome, area]) => ({ nome, area }))
+                 .sort((a, b) => b.area - a.area);
+  if (selectedSettlements.length) {
+    arr = arr.filter(d => selectedSettlements.includes(d.nome));
+  } else {
+    arr = arr.slice(0, 10);
+  }
+  barSettlements = arr.map(d => d.nome);
+  // Calcula margem esquerda conforme comprimento do rótulo
+  const maxLen = arr.length ? Math.max(...arr.map(d => d.nome.length)) : 10;
+  const leftM = Math.min(300, 40 + maxLen * 6);
+
+  // Prepara array de textos formatados em pt-BR com 2 decimais
+  const textValues = arr.map(d =>
+    d.area.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  );
+
+  Plotly.newPlot('bar-settlement', [{
+    x: arr.map(d => d.area),
+    y: arr.map(d => d.nome),
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+      color: '#28a745',
+      opacity: 0.8,
+      line: { width: 1, color: '#1e7e34' }
+    },
+    text: textValues,        // exibe valor na barra
+    textposition: 'auto',    // posiciona dentro ou fora conforme espaço
+    insidetextfont: { color: '#ffffff' },
+    outsidetextfont: { color: '#000000' },
+    hoverinfo: 'text',
+    hovertext: arr.map(d =>
+      `UC: ${d.nome}<br>Área: ${d.area.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2})} ha`
+    )
+  }], {
+    title: {
+      text: `Área Acumulada – ${selectedCategory || 'Todas'}`,
+      x: 0.5,
+      font: { size: 16 }
+    },
+    margin: { l: leftM, r: 10, t: 50, b: 30 },
+    height: 450,
+    yaxis: {
+      automargin: true,
+      autorange: 'reversed',  // opcional: maior valor no topo
+      tickfont: { size: 11 }
+    },
+    xaxis: {
+      title: 'Área (ha)',
+      tickformat: ',.0f',
+      separatethousands: true
+    },
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    paper_bgcolor: 'rgba(0,0,0,0)'
+  }, {
+    displayModeBar: false,
+    responsive: true
+  });
+}
+
+
+    /* ---------- LEAFLET MAP ---------- */
+    function initLeaflet() {
+      if (mapInitialized) return;
+      leafletMap = L.map('map-graph',{zoomSnap:.25,attributionControl:false})
+                    .setView([-14,-55],4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18})
+       .addTo(leafletMap);
+      legendContainer = L.DomUtil.create('div','heat-legend');
+      legendContainer.style.display='none';
+      leafletMap.getContainer().appendChild(legendContainer);
+      mapInitialized = true;
+    }
+
+    /* ---------- ATUALIZA BARRA DE CALOR ---------- */
+    function updateHeatLegend(minVal, maxVal, scale) {
+      const fmt = v=>{
+        if (v>=1e6) return (v/1e6).toFixed(1)+'M';
+        if (v>=1e3) return (v/1e3).toFixed(0)+'k';
+        return v.toFixed(0);
+      };
+      legendContainer.innerHTML = `
+        <h4>Área (ha)</h4>
+        <div class="legend-gradient"></div>
+        <div class="legend-labels">
+          <span>${fmt(maxVal)}</span>
+          <span>${fmt((maxVal+minVal)/2)}</span>
+          <span>${fmt(minVal)}</span>
+        </div>`;
+      const grad = legendContainer.querySelector('.legend-gradient');
+      grad.style.background = `linear-gradient(to top,
+        ${scale(maxVal)} 0%,
+        ${scale((maxVal+minVal)/2)} 50%,
+        ${scale(minVal)} 100%)`;
+      legendContainer.style.display='block';
+    }
+
+    /* ---------- DESENHA MAPA ---------- */
+    function plotMap() {
+      if (!mapInitialized) return;
+      const data = filtroBase();
+      const bynome = d3.rollup(
+        data, v=>d3.sum(v,d=>d.area_ha), d=>d.nome
+      );
+      let toShow = selectedSettlements.length
+                   ? selectedSettlements
+                   : barSettlements;
+      const arr = toShow.map(nome=>({
+        nome, area:bynome.get(nome)||0
+      }));
+      const maxA = d3.max(arr,d=>d.area)||1;
+      const scale = d3.scaleSequential().domain([0,maxA]).interpolator(d3.interpolateYlOrRd);
+      updateHeatLegend(0, maxA, scale);
+      if (geoLayer) geoLayer.remove();
+      geoLayer = L.geoJSON(geojson,{
+        filter: f => toShow.includes(f.properties.nome),
+        style: f=>({
+          weight:1.2, color:'#555',
+          fillOpacity:.75,
+          fillColor: scale(bynome.get(f.properties.nome)||0)
+        }),
+        onEachFeature:(f,layer)=>{
+          const nome = f.properties.nome;
+          const a = bynome.get(nome)||0;
+          layer.bindTooltip(
+            `<strong>${nome}</strong><br>${a.toLocaleString('pt-BR',{maximumFractionDigits:2})} ha`,
+            {sticky:true}
+          );
+          layer.on({
+            mouseover: e=> e.target.setStyle({weight:2,color:'#000'}).bringToFront(),
+            mouseout: e=> geoLayer.resetStyle(e.target),
+            click: e=> leafletMap.fitBounds(e.target.getBounds(),{maxZoom:10})
+          });
+        }
+      }).addTo(leafletMap);
+      if (geoLayer.getLayers().length) {
+        const b = geoLayer.getBounds();
+        leafletMap.fitBounds(b);
+        if (leafletMap.getZoom()>8) leafletMap.setZoom(8);
+      }
+    }
+
+    /* ---------- GRÁFICO LINHA ---------- */
+    function plotLine() {
+      const data = filtroBase();
+      const byano = d3.rollup(
+        data, v=>d3.sum(v,d=>d.area_ha), d=>d.nome, d=>d.ano
+      );
+      const pal = d3.schemeTableau10;
+      const toShow = selectedSettlements.length
+                     ? selectedSettlements
+                     : (barSettlements.length ? barSettlements : [...byano.keys()]);
+      const series = toShow.map((nome,i)=>{
+        const m = byano.get(nome);
+        if (!m) return null;
+        const yrs = [...m.keys()].sort((a,b)=>a-b);
+        return {
+          name: nome,
+          x: yrs,
+          y: yrs.map(y=>m.get(y)||0),
+          mode:'lines+markers',
+          line:{width:2,color:pal[i%pal.length]},
+          marker:{size:8,color:pal[i%pal.length]}
+        };
+      }).filter(Boolean);
+      Plotly.newPlot('line-graph',series,{
+        
+        xaxis:{title:'Ano'},yaxis:{title:'Área (ha)'},
+        legend:{orientation:'h',x:0.5,xanchor:'center',y:-.2},
+        margin:{l:50,r:20,t:50,b:50},height:450,
+        plot_bgcolor:'rgba(0,0,0,0)',paper_bgcolor:'rgba(0,0,0,0)'
+      },{displayModeBar:false,responsive:true});
+    }
+
+    /* ---------- POPULA LISTA ---------- */
+    function populateSettlementList() {
+      const term = settlementSearch.value.toLowerCase();
+      settlementList.innerHTML = allSettlements
+        .filter(n=>n.toLowerCase().includes(term))
+        .map(n=>`
+          <div class="settlement-item ${selectedSettlements.includes(n)?'selected':''}" data-name="${n}">
+            ${n}
+          </div>`).join('');
+      selectedCount.textContent = selectedSettlements.length;
+      settlementList.querySelectorAll('.settlement-item').forEach(el=>{
+        el.onclick = ()=>{
+          const n = el.dataset.name;
+          const idx = selectedSettlements.indexOf(n);
+          if (idx===-1) {
+            if (selectedSettlements.length<10) selectedSettlements.push(n);
+            else alert('Máximo 10 UCs selecionados.');
+          } else {
+            selectedSettlements.splice(idx,1);
+          }
+          populateSettlementList();
+        };
+      });
+    }
+
+    /* ------------- CHECKLIST DOWNLOAD ------------- */
+    function buildDownloadChecklist() {
+      downloadStateBox.innerHTML = listStates.map(uf=>`
+        <div class="form-check form-check-inline mb-1">
+          <input class="form-check-input dl-uf" type="checkbox" id="dl-${uf}" value="${uf}">
+          <label class="form-check-label" for="dl-${uf}">${uf}</label>
+        </div>
+      `).join('');
+    }
+
+    /* ---------- CSV ROW ---------- */
+    function stripAccents(txt) {
+      return txt.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    }
+    function objToCsvRow(obj, headers, decSep, noAcc){
+      return headers.map(h=>{
+        let v = obj[h] ?? '';
+        if (typeof v==='string') v = noAcc?stripAccents(v):v;
+        if (typeof v==='number' && decSep===',') v = v.toString().replace('.',',');
+        return `"${String(v).replace(/"/g,'""')}"`;
+      }).join(';');
+    }
+
+    /* ------------- EVENTOS ------------- */
+    [startYearSelect,endYearSelect,categorySelect,stateSelect]
+      .forEach(el=>el.onchange = ()=>{ plotSettlement(); plotMap(); plotLine(); });
+
+    resetBtn.onclick = ()=>{
+      stateSelect.selectedIndex = -1;
+      categorySelect.value = '';
+      startYearSelect.value = listYears[0];
+      endYearSelect.value   = listYears.at(-1);
+      selectedSettlements = [];
+      plotSettlement(); plotMap(); plotLine();
+    };
+
+    loadMapBtn.onclick = ()=>{
+      initLeaflet(); plotMap();
+      mapBtnContainer.style.display = 'none';
+    };
+
+    settlementSearch.oninput = populateSettlementList;
+    clearSelection.onclick    = ()=>{ selectedSettlements = []; populateSettlementList(); };
+    applySelection.onclick    = ()=>{
+      bootstrap.Modal.getInstance(document.getElementById('interest-modal')).hide();
+      plotSettlement(); plotMap(); plotLine();
+    };
+
+    downloadBtn.onclick = ()=>{
+      const sel = Array.from(document.querySelectorAll('.dl-uf:checked')).map(el=>el.value);
+      const decSep = document.querySelector(decSepSelector).value || '.';
+      const noAcc = removeAccentsChk.checked;
+      let rows = df.filter(d=>!sel.length||sel.includes(d.sigla_uf));
+      if (!rows.length) { alert('Nenhum registro: selecione ao menos um estado.'); return; }
+      const headers = Object.keys(rows[0]);
+      const csv = [ headers.join(';'), ...rows.map(r=>objToCsvRow(r,headers,decSep,noAcc)) ].join('\n');
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `simex_ucs_${Date.now()}.csv`;
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },0);
+    };
+
+    /* ---------------- INICIALIZAÇÃO ---------------- */
+    try {
+      await Promise.all([ loadGeoJSON(), loadCSV() ]);
+      buildFilters();
+      populateSettlementList();
+      buildDownloadChecklist();
+      plotSettlement();
+      plotLine();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('app-root')
+        .insertAdjacentHTML('afterbegin',
+          `<div class="alert alert-danger">Erro: ${err.message}</div>`);
+    }
+  })();
+  </script>
+</body>
+</html>

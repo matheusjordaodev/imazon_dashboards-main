@@ -1,0 +1,10 @@
+/* assets/hide_scrollbars.css  — cobre todos os elementos */
+*, *::before, *::after{
+  scrollbar-width: none !important;        /* Firefox */
+  -ms-overflow-style: none !important;     /* IE 11 / Edge Legacy */
+}
+*::-webkit-scrollbar{
+  display: none !important;                /* Blink / WebKit */
+  width: 0 !important;
+  height: 0 !important;
+}

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>SIMEX - Imóveis Rurais</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="../../../css/base-styles.css">
+  <link rel="stylesheet" href="../../../css/map-styles.css">
+  <link rel="stylesheet" href="../../../css/button-styles.css">
+  <link rel="stylesheet" href="../../../css/legend-styles.css">
+  <link rel="stylesheet" href="../../../css/card-styles.css">
+  <link rel="stylesheet" href="../../../css/controls-styles.css">
+  <link rel="stylesheet" href="../../../css/select-styles.css">
+  <link rel="stylesheet" href="../../../css/responsive-styles.css">
+  <link rel="stylesheet" href="../../../css/modal-styles.css">
+</head>
+<body class="py-3">
+
+<!-- Overlay de carregamento -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p>Carregando dados...</p>
+</div>
+
+<div class="container-fluid" id="app-root">
+
+
+  <!-- BOTÕES PRINCIPAIS -->
+  <div class="row mb-3">
+    <div class="col-auto mb-2">
+      <button id="reset-btn" class="btn btn-success btn-sm custom-button">
+        <i class="fa fa-filter me-1"></i>Remover Filtros
+      </button>
+    </div>
+    <div class="col-auto mb-2">
+      <button id="state-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#state-modal">
+        <i class="fa fa-map me-1"></i>Selecione o Estado
+      </button>
+    </div>
+    <div class="col-auto mb-2">
+      <button id="download-btn-open" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#download-modal">
+        <i class="fa fa-download me-1"></i>Baixar CSV
+      </button>
+    </div>
+    <div class="col-auto mb-2">
+      <button id="interest-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#interest-modal">
+        Selecionar Área de Interesse
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTROS ANO & CATEGORIA -->
+  <div class="row g-2 align-items-end mb-4">
+    <div class="col-12 col-md-auto"><label class="fw-bold">Ano Início:</label></div>
+    <div class="col-12 col-md-3"><select id="start-year-select" class="form-select form-select-sm"></select></div>
+
+    <div class="col-12 col-md-auto"><label class="fw-bold">Ano Fim:</label></div>
+    <div class="col-12 col-md-3"><select id="end-year-select" class="form-select form-select-sm"></select></div>
+
+    <div class="col-12 col-md-auto"><label class="fw-bold">Categoria:</label></div>
+    <div class="col-12 col-md-3"><select id="category-select" class="form-select form-select-sm"></select></div>
+  </div>
+
+  <!-- MAPA + BARRA -->
+  <div class="row gx-2 mb-4">
+    <div class="col-12 col-md-6 mb-4 mb-md-0">
+      <div class="card h-100">
+        <div class="card-header">Área Acumulada de Exploração Madeireira - Top 10</div>
+        <div class="card-body p-0">
+          <div id="bar-settlement" style="height:450px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Mapa de Imóveis Rurais</div>
+        <div class="card-body p-0 map-container">
+          <!-- Div para o mapa Leaflet -->
+          <div id="map-graph" style="height:100%;"></div>
+          
+          <!-- Botão para carregar o mapa -->
+          <div id="map-load-btn-container">
+            <button id="load-map-btn" class="btn btn-success">
+              <i class="fas fa-map me-2"></i>Carregar Mapa
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SÉRIE HISTÓRICA -->
+  <div class="row gx-2 mb-5">
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header">Série Histórica</div>
+        <div class="card-body p-0">
+          <div id="line-graph" style="height:450px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Estados -->
+<div class="modal fade" id="state-modal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Escolha os Estados</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <select id="state-select" class="form-select" multiple size="8"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Modal Download -->
+<div class="modal fade" id="download-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Configurações de Download</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div id="download-state-checklist" class="mb-3"></div><hr>
+      <div class="mb-2">
+        <label class="me-2">Separador decimal</label>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="dec-sep" id="dec-dot" value="." checked>
+          <label class="form-check-label" for="dec-dot">Ponto</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value=",">
+          <label class="form-check-label" for="dec-comma">Vírgula</label>
+        </div>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="remove-accents">
+        <label class="form-check-label" for="remove-accents">Sem acentuação</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="download-btn" class="btn btn-success me-2">Download</button>
+      <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Modal Áreas de Interesse -->
+<div class="modal fade" id="interest-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Selecionar Áreas de Interesse</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="search-box">
+        <input type="text" id="settlement-search" class="form-control" placeholder="Buscar Imóvel Rural...">
+      </div>
+      
+      <div class="selection-info">
+        <span id="selected-count">0</span> de 10 selecionados
+      </div>
+      
+      <div id="settlement-list" class="settlement-list">
+        <!-- Lista de Imóveis Rurais será preenchida dinamicamente -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="clear-selection" class="btn btn-outline-secondary">Limpar Seleção</button>
+      <button id="apply-selection" class="btn btn-success">Aplicar Seleção</button>
+    </div>
+  </div></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script type="module">
+(async () => {
+  /* ----------------- CONSTANTES ----------------- */
+  const GEOJSON_URL = "https://cdn.jsdelivr.net/gh/imazon-cgi/simex@main/datasets/geojson/simex_amazonia_PAMT2007_2023_assentamentos.geojson";
+  const CSV_URL = new URL("/dataset/simex/csv/simex_amazonia_PAMT2007_2023_imoveisrurais.csv", window.location.origin).href;
+
+  /* --------------- ELEMENTOS DOM --------------- */
+  const stateSelect     = document.getElementById('state-select');
+  const resetBtn        = document.getElementById('reset-btn');
+  const startYearSelect = document.getElementById('start-year-select');
+  const endYearSelect   = document.getElementById('end-year-select');
+  const categorySelect  = document.getElementById('category-select');
+  const loadMapBtn      = document.getElementById('load-map-btn');
+  const mapBtnContainer = document.getElementById('map-load-btn-container');
+  const interestBtn     = document.getElementById('interest-btn');
+  const settlementList  = document.getElementById('settlement-list');
+  const settlementSearch = document.getElementById('settlement-search');
+  const selectedCount   = document.getElementById('selected-count');
+  const clearSelection  = document.getElementById('clear-selection');
+  const applySelection  = document.getElementById('apply-selection');
+  const loadingOverlay  = document.getElementById('loading-overlay');
+
+  /* ----------------- ESTADO ------------------ */
+  let geojson, df = [];
+  let barSettlements = [];
+  let listStates = [], listYears = [], allSettlements = [];
+  let selectedStates = [], selectedCategory = '', selectedSettlements = [];
+  let currentYear;
+  let leafletMap, geoLayer;
+  let mapInitialized = false;
+  let legendContainer;
+  let settlementToMunicipio = {};
+  let dataCache = {}; // Cache para dados pré-processados
+
+  /* ----------------- LOADERS ----------------- */
+  async function loadGeoJSON() {
+    const resp = await fetch(GEOJSON_URL);
+    if (!resp.ok) throw new Error(`GeoJSON: ${resp.status}`);
+    geojson = await resp.json();
+  }
+
+  async function loadCSV() {
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error(`CSV: ${resp.status}`);
+    const text = await resp.text();
+    df = d3.csvParse(text, d => ({
+      ...d,
+      ano     : d.ano     !== '' ? +d.ano     : null,
+      area_ha : d.area_ha !== '' ? +d.area_ha : null
+    }));
+
+    // Listas auxiliares
+    listStates  = [...new Set(df.map(d => d.sigla_uf))].sort();
+    listYears   = [...new Set(df.map(d => d.ano))].sort((a,b)=>a-b);
+    allSettlements = [...new Set(df.map(d => d.name))].sort();
+    currentYear = Math.max(...listYears);
+    
+    // Criar mapa de name para nome (município)
+    settlementToMunicipio = {};
+    df.forEach(d => {
+      settlementToMunicipio[d.name] = d.nome;
+    });
+    
+    // Pré-processar dados para cache
+    preprocessData();
+  }
+  
+  // Função para pré-processar dados e armazenar em cache
+  function preprocessData() {
+    dataCache = {
+      bySettlement: d3.rollup(
+        df,
+        v => ({
+          area: d3.sum(v, d => d.area_ha),
+          municipio: v[0].nome,
+          years: d3.rollup(v, 
+            arr => d3.sum(arr, d => d.area_ha), 
+            d => d.ano
+          )
+        }),
+        d => d.name
+      ),
+      byYear: d3.rollup(
+        df,
+        v => d3.sum(v, d => d.area_ha),
+        d => d.ano
+      )
+    };
+  }
+
+  /* ------------------ FILTROS ------------------ */
+  function buildFilters() {
+    /* Estados */
+    stateSelect.innerHTML = '';
+    listStates.forEach(s =>
+      stateSelect.insertAdjacentHTML('beforeend', `<option value="${s}">${s}</option>`));
+
+    /* Anos */
+    startYearSelect.innerHTML = '';
+    endYearSelect.innerHTML   = '';
+    listYears.forEach(y => {
+      startYearSelect.insertAdjacentHTML('beforeend', `<option>${y}</option>`);
+      endYearSelect.insertAdjacentHTML  ('beforeend', `<option>${y}</option>`);
+    });
+    startYearSelect.value = listYears[0];
+    endYearSelect.value   = listYears.at(-1);
+
+    /* Categorias */
+    const categories = [
+      { label: 'Todas',          value: ''               },
+      { label: 'Não autorizada', value: 'não autorizada' },
+      { label: 'Autorizada',     value: 'autorizada'     },
+      { label: 'Análise',        value: 'análise'        }
+    ];
+    categorySelect.innerHTML = categories
+      .map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+  }
+
+  /* ----------- BASE PARA FILTRO ----------- */
+  function filtroBase() {
+    const startYear = +startYearSelect.value;
+    const endYear   = +endYearSelect.value;
+    selectedCategory = categorySelect.value;
+    selectedStates   = Array.from(stateSelect.selectedOptions).map(o => o.value);
+
+    // Filtra os dados
+    let filtered = df
+      .filter(d => d.ano >= startYear && d.ano <= endYear)
+      .filter(d => !selectedCategory || d.categoria === selectedCategory)
+      .filter(d => !selectedStates.length || selectedStates.includes(d.sigla_uf));
+    
+    // Se houver Imóveis Rurais selecionados, filtrar por eles
+    if (selectedSettlements.length > 0) {
+      filtered = filtered.filter(d => selectedSettlements.includes(d.name));
+    }
+    
+    return filtered;
+  }
+
+  /* ----------- GRÁFICO BARRAS ----------- */
+function plotSettlement() {
+  const data = filtroBase(); // sua função de filtro
+
+  // Agrupa por imóvel usando d.nome como chave única, somando a área
+  const bySettlement = d3.rollup(
+    data,
+    v => ({
+      area: d3.sum(v, d => d.area_ha),    // ou ajuste se o campo for outro
+      municipio: v[0].municipio || v[0].nome_municipio || '' // se quiser usar município no tooltip
+    }),
+    d => d.nome
+  );
+
+  // Converte para array e ordena por área decrescente
+  let arr = Array.from(bySettlement, ([nome, obj]) => ({
+    nome,           // identificador único do imóvel rural
+    municipio: obj.municipio,
+    area: obj.area
+  })).sort((a, b) => b.area - a.area);
+
+  // Filtra por seleção ou pega top 10
+  if (selectedSettlements && selectedSettlements.length > 0) {
+    arr = arr.filter(d => selectedSettlements.includes(d.nome));
+  } else {
+    arr = arr.slice(0, 10);
+  }
+
+  // Atualiza lista para série temporal
+  barSettlements = arr.map(d => d.nome);
+
+  // Se desejar manter sempre 10 entradas (opcional), preenche com zeros
+  while (arr.length < 10) {
+    arr.push({ nome: `Imóvel ${arr.length + 1}`, municipio: "N/A", area: 0 });
+  }
+
+  // Margem esquerda baseada no comprimento de 'nome'
+  const maxLenName = arr.length ? Math.max(...arr.map(d => d.nome.length)) : 10;
+  const leftMargin = Math.min(300, 40 + maxLenName * 6);
+
+  // Prepara texto apenas com valor da área (formatado pt-BR)
+  const textValues = arr.map(d =>
+    d.area.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  );
+
+  // Trace de barras horizontais: y = nome do imóvel
+  const trace = {
+    x: arr.map(d => d.area),
+    y: arr.map(d => d.nome),
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+      color: '#28a745',
+      opacity: 0.8,
+      line: { width: 1, color: '#1e7e34' }
+    },
+    text: textValues,
+    textposition: 'auto',
+    insidetextfont: { color: '#fff' },
+    outsidetextfont: { color: '#000' },
+    hoverinfo: 'none' // desabilita tooltip extra, mas se quiser tooltip com município, ajuste aqui
+  };
+
+  const layout = {
+    title: {
+      text: `Área Acumulada – ${selectedCategory || 'Todas'}`,
+      x: 0.5,
+      font: { size: 16 }
+    },
+    margin: { l: leftMargin, r: 10, t: 50, b: 30 },
+    height: 450,
+    yaxis: {
+      automargin: true,
+      tickfont: { size: 11 },
+      autorange: 'reversed' // opcional: maior barra no topo
+    },
+    xaxis: {
+      title: 'Área (ha)',
+      tickformat: ',.0f',
+      separatethousands: true
+    },
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    paper_bgcolor: 'rgba(0,0,0,0)'
+  };
+
+  Plotly.newPlot('bar-settlement', [trace], layout, {
+    displayModeBar: false,
+    responsive: true
+  });
+}
+
+
+  /* ---------- LEAFLET MAP ---------- */
+  function initLeaflet() {
+    if (mapInitialized) return;
+    
+    leafletMap = L.map('map-graph', {
+      zoomSnap: 0.25,
+      attributionControl: false
+    }).setView([-14, -55], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(leafletMap);
+
+    // Criar container para a legenda
+    legendContainer = L.DomUtil.create('div', 'heat-legend');
+    legendContainer.style.display = 'none';
+    leafletMap.getContainer().appendChild(legendContainer);
+
+    mapInitialized = true;
+  }
+
+  /* ---------- ATUALIZA BARRA DE CALOR ---------- */
+  function updateHeatLegend(minVal, maxVal, colorScale) {
+    if (!legendContainer) return;
+    
+    // Formatar os valores
+    const formatValue = val => {
+      if (val >= 1000000) return `${(val/1000000).toFixed(1)}M`;
+      if (val >= 1000) return `${(val/1000).toFixed(0)}k`;
+      return val.toFixed(0);
+    };
+
+    legendContainer.innerHTML = `
+      <h4>Área (ha)</h4>
+      <div class="legend-gradient"></div>
+      <div class="legend-labels">
+        <span>${formatValue(maxVal)}</span>
+        <span>${formatValue((maxVal + minVal)/2)}</span>
+        <span>${formatValue(minVal)}</span>
+      </div>
+    `;
+    
+    // Aplicar o gradiente
+    const gradient = legendContainer.querySelector('.legend-gradient');
+    gradient.style.background = `linear-gradient(to top, 
+      ${colorScale(maxVal)} 0%, 
+      ${colorScale((maxVal + minVal)/2)} 50%, 
+      ${colorScale(minVal)} 100%)`;
+    
+    legendContainer.style.display = 'block';
+  }
+
+  /* ---------- DESENHA / ATUALIZA MAPA LEAFLET ---------- */
+  function plotMap() {
+    if (!mapInitialized) return;
+
+    /* 1. Base já filtrada por estado, categoria e intervalo de anos */
+    const base = filtroBase();
+
+    /* 2. Calcula, p/ cada assentamento, a soma total de área */
+    const byName = d3.rollup(
+      base,
+      v => d3.sum(v, d => d.area_ha),
+      d => d.name
+    );
+
+    // Obter os Imóveis Rurais a mostrar
+    let settlementsToShow = [];
+    if (selectedSettlements.length > 0) {
+      settlementsToShow = selectedSettlements;
+    } else if (barSettlements.length > 0) {
+      settlementsToShow = barSettlements;
+    }
+
+    // Encontrar valor máximo
+    const maxArea = d3.max(Array.from(byName.values())) || 1;
+    
+    /* 3. Escala de cor com min=0 e max=valor máximo */
+    const minVal = 0;
+    const maxVal = maxArea;
+    const colorScale = d3.scaleSequential()
+                         .domain([minVal, maxVal])
+                         .interpolator(d3.interpolateYlOrRd);
+
+    /* 4. Atualizar barra de calor */
+    updateHeatLegend(minVal, maxVal, colorScale);
+
+    /* 5. Remove camada anterior (se existir) */
+    if (geoLayer) geoLayer.remove();
+
+    /* 6. Cria nova camada com os Imóveis Rurais */
+    geoLayer = L.geoJSON(geojson, {
+      filter: f => settlementsToShow.includes(f.properties.nome),
+
+      style : f => {
+        const area = byName.get(f.properties.nome) || 0;
+        return {
+          weight      : 1.2,
+          color       : '#555',
+          fillOpacity : 0.75,
+          fillColor   : colorScale(area)
+        };
+      },
+
+      onEachFeature: (f, layer) => {
+        const name = f.properties.nome;
+        const area = byName.get(name) || 0;
+        const municipio = settlementToMunicipio[name] || '';
+
+        layer.bindTooltip(
+          `<strong>${municipio}</strong><br>` +
+          `Imóvel: ${name}<br>` +
+          `Área: ${area.toFixed(2)} ha`,
+          { sticky: true }
+        );
+
+        layer.on({
+          mouseover: e => {
+            e.target.setStyle({ 
+              weight: 2, 
+              color: '#000',
+              fillOpacity: 0.9
+            }).bringToFront();
+          },
+          mouseout : e => geoLayer.resetStyle(e.target),
+          click    : e => leafletMap.fitBounds(e.target.getBounds(), { maxZoom: 10 })
+        });
+      }
+    }).addTo(leafletMap);
+  }
+
+  /* ---------- GRÁFICO LINHA ---------- */
+  function plotLine() {
+    const data = filtroBase();
+    
+    // Agrupar por imóvel e por ano
+    const bySettlementAndYear = d3.rollup(
+      data,
+      v => d3.sum(v, d => d.area_ha),
+      d => d.nome,
+      d => d.ano
+    );
+
+    // Determinar quais Imóveis Rurais mostrar (apenas os do top 10)
+    let settlementsToShow = barSettlements;
+
+    // Preparar séries
+    const series = settlementsToShow.map((name, idx) => {
+      const yearMap = bySettlementAndYear.get(name);
+      if (!yearMap) return null;
+
+      const years = Array.from(yearMap.keys()).sort((a, b) => a - b);
+      const municipio = settlementToMunicipio[name] || name;
+      const color = d3.schemeTableau10[idx % 10];
+
+      return {
+        name: municipio,
+        hovertemplate: `Área: %{y:.2f} ha<br>Município: ${municipio}<br>Imóvel Rural: ${name}<extra></extra>`,
+        x: years,
+        y: years.map(year => yearMap.get(year)),
+        mode: 'lines+markers',
+        line: { width: 2, color },
+        marker: { size: 8, color }
+      };
+    }).filter(Boolean);
+
+    const layout = {
+      xaxis: { 
+        title: 'Ano',
+        gridcolor: '#f0f0f0'
+      },
+      yaxis: { 
+        title: 'Área (ha)',
+        gridcolor: '#f0f0f0'
+      },
+      legend: { 
+        orientation: 'h', 
+        x: 0.5, 
+        y: -0.2,
+        bgcolor: 'rgba(255,255,255,0.7)',
+        font: { size: 10 }
+      },
+      margin: { l: 50, t: 50, b: 80, r: 20 }, // Aumentar margem inferior para legenda
+      height: 450,
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      hovermode: 'closest'
+    };
+    
+    Plotly.newPlot('line-graph', series, layout,
+                   { displayModeBar: false, responsive: true });
+  }
+  
+  /* ---------- POPULAR LISTA DE Imóveis Rurais ---------- */
+  function populateSettlementList() {
+    settlementList.innerHTML = '';
+    
+    const searchTerm = settlementSearch.value.toLowerCase();
+    
+    // Filtrar Imóveis Rurais pelo termo de busca
+    const filteredSettlements = allSettlements.filter(name => 
+      name.toLowerCase().includes(searchTerm) || 
+      (settlementToMunicipio[name] && settlementToMunicipio[name].toLowerCase().includes(searchTerm))
+    );
+    
+    // Criar itens da lista
+    filteredSettlements.forEach(name => {
+      const isSelected = selectedSettlements.includes(name);
+      const municipio = settlementToMunicipio[name] || '';
+      const item = document.createElement('div');
+      item.className = `settlement-item ${isSelected ? 'selected' : ''}`;
+      item.dataset.name = name;
+      item.innerHTML = `${name} - ${municipio}`;
+      
+      item.addEventListener('click', () => {
+        toggleSettlementSelection(name);
+      });
+      
+      settlementList.appendChild(item);
+    });
+    
+    // Atualizar contador
+    updateSelectionCount();
+  }
+  
+  /* ---------- ALTERNAR SELEÇÃO DE ASSENTAMENTO ---------- */
+  function toggleSettlementSelection(name) {
+    const index = selectedSettlements.indexOf(name);
+    
+    if (index === -1) {
+      // Verificar se já atingiu o limite
+      if (selectedSettlements.length >= 10) {
+        alert('Você pode selecionar no máximo 10 Imóveis Rurais.');
+        return;
+      }
+      selectedSettlements.push(name);
+    } else {
+      selectedSettlements.splice(index, 1);
+    }
+    
+    // Atualizar UI
+    populateSettlementList();
+  }
+  
+  /* ---------- ATUALIZAR CONTADOR DE SELEÇÃO ---------- */
+  function updateSelectionCount() {
+    selectedCount.textContent = selectedSettlements.length;
+  }
+
+  /* ------------- EVENTOS ------------- */
+  [startYearSelect, endYearSelect, categorySelect, stateSelect]
+    .forEach(el => el.addEventListener('change', () => {
+      plotSettlement(); 
+      plotMap(); 
+      plotLine();
+    }));
+
+  resetBtn.addEventListener('click', () => {
+    stateSelect.selectedIndex = -1;
+    categorySelect.value = '';
+    startYearSelect.value = listYears[0];
+    endYearSelect.value   = listYears.at(-1);
+    selectedSettlements = [];
+    plotSettlement(); 
+    plotMap(); 
+    plotLine();
+  });
+
+  // Evento para carregar o mapa
+  loadMapBtn.addEventListener('click', () => {
+    initLeaflet();
+    plotMap();
+    mapBtnContainer.style.display = 'none';
+    document.getElementById('map-graph').style.backgroundColor = '#fff';
+  });
+  
+  // Evento para busca de Imóveis Rurais
+  settlementSearch.addEventListener('input', populateSettlementList);
+  
+  // Limpar seleção
+  clearSelection.addEventListener('click', () => {
+    selectedSettlements = [];
+    populateSettlementList();
+  });
+  
+  // Aplicar seleção
+  applySelection.addEventListener('click', () => {
+    // Fechar o modal usando a API do Bootstrap 5
+    const modal = bootstrap.Modal.getInstance(document.getElementById('interest-modal'));
+    modal.hide();
+    
+    plotSettlement();
+    plotMap();
+    plotLine();
+  });
+
+  /* ---------------- INICIALIZAÇÃO ---------------- */
+  try {
+    // Mostrar overlay de carregamento
+    loadingOverlay.style.display = 'flex';
+    
+    await Promise.all([loadGeoJSON(), loadCSV()]);
+    
+    buildFilters();
+    populateSettlementList();
+    plotSettlement();
+    plotLine();
+    
+    
+    
+    loadingOverlay.style.display = 'none';
+    
+  } catch (err) {
+    console.error(err);
+    loadingOverlay.style.display = 'none';
+    document.getElementById('app-root')
+      .insertAdjacentHTML('afterbegin',
+        `<div class="alert alert-danger">Erro: ${err.message}</div>`);
+  }
+})();
+</script>
+</body>
+</html>

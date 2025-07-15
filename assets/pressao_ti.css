@@ -1,0 +1,29 @@
+
+/* assets/pressao_ti.css */
+
+/* rótulos dos filtros */
+.filter-label{
+  font-weight:600;
+  white-space:nowrap;
+}
+
+/* dropdown ocupa 100 % da coluna */
+.filter-dropdown{
+  width:100%;
+}
+
+/* padding menor no card de filtros em telas pequenas */
+@media (max-width: 576px){
+  .filter-card-body{
+    padding:1rem;
+  }
+}
+/* assets/hide_scrollbars.css */
+html, body{
+  overflow: auto;          /* continua rolando normalmente */
+  scrollbar-width: none;   /* Firefox */
+  -ms-overflow-style: none;/* IE/Edge legado */
+}
+html::-webkit-scrollbar{
+  display: none;           /* Chrome, Safari, Android */
+}

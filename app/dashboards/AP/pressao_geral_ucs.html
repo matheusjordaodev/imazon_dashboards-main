@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard de Desmatamento</title>
+
+  <!-- viewport para responsividade -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- ─── TRUQUE: esconde o trilho da scrollbar secundária ────── -->
+  <style>
+    html,body{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
+  </style>
+
+  <!-- ─── CSS & LIBS ───────────────────────────────────────────── -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="../../../css/base-styles.css">
+<link rel="stylesheet" href="../../../css/map-styles.css">
+<link rel="stylesheet" href="../../../css/button-styles.css">
+<link rel="stylesheet" href="../../../css/legend-styles.css">
+<link rel="stylesheet" href="../../../css/card-styles.css">
+<link rel="stylesheet" href="../../../css/controls-styles.css">
+<link rel="stylesheet" href="../../../css/select-styles.css">
+<link rel="stylesheet" href="../../../css/responsive-styles.css">
+<link rel="stylesheet" href="../../../css/modal-styles.css">
+<link  href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" rel="stylesheet">
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+  <!-- ─── CSS CUSTOM ───────────────────────────────────────────── -->
+  <style>
+    body{font-family:system-ui,Helvetica,Arial,sans-serif;}
+    img,canvas,svg{max-width:100%;height:auto;}
+
+    /* mapa */
+    .map-container{position:relative;width:100%;height:60vh;}
+    #overlay{position:absolute;inset:0;background:rgba(255,255,255,.7);pointer-events:none;z-index:500;}
+    #load-btn{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:#28a745;color:#fff;padding:10px 20px;border:0;border-radius:4px;
+      font-size:1rem;cursor:pointer;z-index:1000;
+    }
+    #legend-container{position:absolute;bottom:10px;right:10px;z-index:1000;}
+
+    /* tabela */
+    .dash-table-container{overflow-x:auto;}
+
+    /* ajustes mobile */
+    @media (max-width:768px){
+      .map-container{height:50vh;}
+      #bar-chart,#pie1,#pie2{height:300px!important;}
+      #pie1,#pie2{height:280px!important;}      /* donuts menores   */
+      #reset-btn,#download-btn{width:100%;margin-top:.25rem;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid py-3">
+
+  <!-- FILTROS -->
+  <div class="row g-2 align-items-end mb-4">
+    <div class="col-12 col-md-auto"><label class="fw-bold">MODALIDADE</label></div>
+    <div class="col-12 col-md-3"><select id="modalidade-filter" class="form-select w-100"><option value="">Todas</option></select></div>
+
+    <div class="col-12 col-md-auto"><label class="fw-bold">USO</label></div>
+    <div class="col-12 col-md-3"><select id="uso-filter" class="form-select w-100"><option value="">Todos</option></select></div>
+
+    <div class="col-12 col-md-auto"><label class="fw-bold">UF</label></div>
+    <div class="col-12 col-md-2"><select id="uf-filter" class="form-select w-100"><option value="">Todas</option></select></div>
+
+    <div class="col-6 col-md-auto">
+      <button id="reset-btn" class="btn btn-success btn-sm w-100 w-md-auto">
+        <i class="fa fa-filter me-1"></i>Remover Filtros
+      </button>
+    </div>
+
+    <div class="col-6 col-md-auto">
+      <button id="download-btn" class="btn btn-success btn-sm w-100 w-md-auto">
+        <i class="fa fa-download me-1"></i>Baixar CSV
+      </button>
+    </div>
+  </div><!-- /filtros -->
+
+  <!-- MAPA + BARRA -->
+  <div class="row gx-2 mb-4">
+    <div class="col-12 col-md-6 mb-4 mb-md-0">
+      <div class="card h-100">
+        <div class="card-header">Mapa de Áreas Protegidas</div>
+        <div class="card-body p-0">
+          <div class="map-container">
+            <div id="map" class="w-100 h-100"></div>
+            <div id="overlay"></div>
+            <button id="load-btn">Carregar Mapa</button>
+            <div id="legend-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+  <div class="card h-100">
+    <div class="card-header">TOP 10 Áreas de Unidade de Conservação por Desmatamento</div>
+    <!-- Tornar o card-body position-relative para posicionar o overlay -->
+    <div class="card-body position-relative p-0">
+      <!-- Contêiner do gráfico -->
+      <div id="bar-chart" style="height:450px;"></div>
+      <!-- Overlay de carregamento, visível até o gráfico ser renderizado -->
+      <div id="bar-loading" style="
+           display: flex;
+           position: absolute;
+           inset: 0;
+           align-items: center;
+           justify-content: center;
+           background: rgba(255,255,255,0.7);
+           z-index: 10;
+         ">
+        <div class="spinner-border text-success" role="status">
+          <span class="visually-hidden">Carregando…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+  <!-- DONUTS -->
+  <div class="row gx-2 mb-4">
+    <div class="col-12 col-md-6 mb-4 mb-md-0">
+      <div class="card h-100">
+        <div class="card-header">Ameaça de Desmatamento por Estado e Modalidade</div>
+        <div class="card-body"><div id="pie1" style="height:400px"></div></div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Ameaça de Desmatamento por Área de Proteção</div>
+        <div class="card-body"><div id="pie2" style="height:400px"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="row gx-2 mb-5">
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header">Top 10 Áreas Protegidas Mais Afetadas</div>
+        <div class="card-body">
+          <div class="dash-table-container">
+            <table id="top-table" class="display compact w-100">
+              <thead>
+                <tr>
+                  <th>Nome</th><th>Focos de Calor</th><th>Número de CAR</th>
+                  <th>Área de CAR</th><th>Estradas Não Oficiais</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.container-fluid -->
+
+<!-- ─── JS LIBS ──────────────────────────────────────────────── -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<!-- ─── JS PRINCIPAL ─────────────────────────────────────────── -->
+<script>
+if(typeof window!=='undefined'&&typeof document!=='undefined'){
+(async()=>{
+
+  /* CONSTANTES / HELPERS GERAIS -------------------------------- */
+  const BRAZIL_BOUNDS=[[-33.75,-73.99],[5.27,-34.79]];
+  const PALETTE=["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#f03b20","#bd0026","#800026"];
+  const N_CLASSES=PALETTE.length;
+
+  /* responsividade */
+  const isMobile = () => window.matchMedia('(max-width:768px)').matches;
+  const abbreviate = (txt,len=18)=>
+        isMobile()&&txt.length>len?txt.slice(0,len-1)+'…':txt;
+
+  /* remove prefixos (APA, ARIE…) e artigos */
+  const stripPrefix=txt=>{
+    const PREFIX=["APA ","ARIE ","PARNA ","RESEX ","RDS "];
+    const ARTICLES=["DA ","DAS ","DE ","DES ","DO ","DOS "];
+    let t=(txt||"").trim();
+    for(const p of PREFIX)if(t.toUpperCase().startsWith(p)){t=t.slice(p.length);break;}
+    for(const a of ARTICLES)if(t.toUpperCase().startsWith(a)){t=t.slice(a.length);break;}
+    return t.trim();
+  };
+
+  /* -------------- CARREGA GEOJSON ----------------------------- */
+  const GEO_URL="https://raw.githubusercontent.com/imazon-cgi/ap/main/dataset/geojson/PRESSAO_GERAL_UCs.geojson";
+  const geojson=await fetch(GEO_URL).then(r=>r.json());
+  const FEATURES=geojson.features;
+  const PROPS=FEATURES.map(f=>f.properties);
+
+  /* filtros */
+  const unique=arr=>[...new Set(arr.filter(Boolean))].sort();
+  const MODALIDADES=unique(PROPS.map(p=>p.MODALIDADE));
+  const USOS       =unique(PROPS.map(p=>p.USO));
+  const UFS        =unique(PROPS.map(p=>p.UF));
+  const appendOpts=(id,opts)=>{
+    const sel=document.getElementById(id);
+    opts.forEach(o=>sel.insertAdjacentHTML('beforeend',`<option value="${o}">${o}</option>`));
+  };
+  appendOpts('modalidade-filter',MODALIDADES);
+  appendOpts('uso-filter',USOS);
+  appendOpts('uf-filter',UFS);
+
+  /* escala de cores */
+  const values=PROPS.map(p=>+p.DESMATAM_1||0);
+  const minVal=Math.min(...values);
+  const maxVal=Math.max(...values);
+  const step=(maxVal-minVal)/N_CLASSES;
+  const BINS=Array.from({length:N_CLASSES+1},(_,i)=>minVal+i*step);
+  const classify=v=>{
+    if(v==null)return'#ccc';
+    for(let i=0;i<N_CLASSES;i++)if(v<=BINS[i+1])return PALETTE[i];
+    return PALETTE[N_CLASSES-1];
+  };
+
+  /* legenda inicial (placeholder) */
+  const legendDiv=document.getElementById('legend-container');
+  legendDiv.innerHTML='<div style="width:20px;height:150px;background:linear-gradient(to top,#800026,#ffffcc)"></div>';
+  const buildClassLegend=()=>`
+    <div style="display:flex;align-items:center;font-size:.75rem">
+      <div style="width:20px;height:150px;
+                  background:linear-gradient(to top,${PALETTE.at(-1)},${PALETTE[0]});
+                  border:1px solid #ccc"></div>
+      <div style="display:flex;flex-direction:column;justify-content:space-between;
+                  height:150px;margin-left:4px">
+        <span>${Math.round(minVal)}</span><span>${Math.round(maxVal)}</span>
+      </div>
+    </div>`;
+
+  /* filtro em memória */
+  const filter=(m,u,uf)=>FEATURES.filter(f=>(
+    (!m || f.properties.MODALIDADE===m)&&
+    (!u || f.properties.USO        ===u)&&
+    (!uf|| f.properties.UF         ===uf)
+  ));
+
+  /* ------------------- MAPA LEAFLET --------------------------- */
+  const map=L.map('map',{
+    center:[-14.2,-51.9],zoom:4,minZoom:4,
+    maxBounds:BRAZIL_BOUNDS,maxBoundsViscosity:.9,
+    zoomControl:false
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              {attribution:'© OpenStreetMap'}).addTo(map);
+  
+  const layerGroup=L.layerGroup().addTo(map);
+
+  const makePolygons=feats=>{
+    layerGroup.clearLayers();
+    feats.forEach(feat=>{
+      const g=feat.geometry;
+      const crd=g.type==='Polygon'?[g.coordinates]:g.coordinates;
+      const rings=crd.map(r=>r[0].map(([lon,lat])=>[lat,lon]));
+      const color=classify(+feat.properties.DESMATAM_1||0);
+      const pl=L.polygon(rings,{color:'#000',weight:1,fillColor:color,fillOpacity:.7})
+                 .addTo(layerGroup);
+      const nome = feat.properties.NOME||'—';
+      const nivel=(+feat.properties.DESMATAM_1||0).toFixed(2);
+      pl.bindTooltip(`<div><strong>${nome}</strong><br>Nível: ${nivel}</div>`);
+      pl.bindPopup  (`<strong>${nome}</strong><br>Nível: ${nivel}`);
+      pl.on('click',()=>map.setView(pl.getBounds().getCenter(),map.getZoom()+1));
+    });
+  };
+
+  /* botão carregar mapa */
+  let mapLoaded=false;
+  document.getElementById('load-btn').addEventListener('click',()=>{
+    mapLoaded=true;
+    makePolygons(filter(...currentFilters()));
+    document.getElementById('overlay').style.display='none';
+    document.getElementById('load-btn').style.display='none';
+    legendDiv.innerHTML=buildClassLegend();
+  });
+
+  /* --------------- GRÁFICOS PLOTLY ---------------------------- */
+  const barDiv =document.getElementById('bar-chart');
+  const pie1Div=document.getElementById('pie1');
+  const pie2Div=document.getElementById('pie2');
+
+ const renderBar = (m, u, uf) => {
+  const overlay = document.getElementById('bar-loading');
+  if (overlay) overlay.style.display = 'flex';   // mostra spinner
+
+  /* filtra e prepara dados */
+  const rows = filter(m, u, uf).map(f => ({
+    area: stripPrefix(f.properties.NOME),
+    km   : +f.properties.DESMATAM_1 || 0
+  }))
+  .sort((a, b) => b.km - a.km)
+  .slice(0, 10);
+
+  if (!rows.length) {
+    Plotly.newPlot(barDiv, [], {}, { responsive: true })
+          .then(() => { if (overlay) overlay.style.display = 'none'; });
+    return;
+  }
+
+  const xVals   = rows.map(r => r.km);
+  const yLabels = rows.map(r => r.area);
+  const txtVals = xVals.map(v =>
+    `${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km²`
+  );
+
+  const mobile = isMobile();
+
+  Plotly.newPlot(
+    barDiv,
+    [{
+      type        : 'bar',
+      orientation : 'h',
+      x           : xVals,
+      y           : yLabels,
+      marker      : { color: '#2E8B57' },
+
+      /* ‼ valores fora das barras */
+      text        : txtVals,
+      textposition: 'outside',
+      textfont    : { size: mobile ? 10 : 12, color: '#000' },
+      cliponaxis  : false
+    }],
+    {
+      template : 'plotly_white',
+      autosize : true,
+      height   : mobile ? 320 : 450,
+
+      /* espaço uniforme entre categorias */
+      bargap   : 0.30,
+
+      margin   : { l: mobile ? 60 : 110, r: 90, t: 60, b: 30 },
+
+      xaxis    : {
+        title    : 'km²',
+        showgrid : true,
+        gridcolor: 'rgba(0,0,0,.08)',
+        tickfont : { size: mobile ? 10 : 12 }
+      },
+      yaxis    : { automargin: true, tickfont: { size: mobile ? 10 : 12 } }
+    },
+    { responsive: true, displayModeBar: false }
+  ).then(() => {
+    if (overlay) overlay.style.display = 'none'; // esconde spinner
+  }).catch(err => {
+    console.error('Erro ao renderizar gráfico de barras:', err);
+    if (overlay) overlay.style.display = 'none';
+  });
+};
+
+/* mantém o gráfico responsivo ao redimensionar a janela */
+window.addEventListener('resize', () => {
+  if (barDiv && barDiv.data) Plotly.Plots.resize(barDiv);
+});
+
+
+
+  /* ------------ DONUTS RESPONSIVOS --------------------------- */
+  const renderPies=(m,u,uf)=>{
+    const feats=filter(m,u,uf);
+    if(!feats.length){
+      Plotly.newPlot(pie1Div,[],{}, {responsive:true});
+      Plotly.newPlot(pie2Div,[],{}, {responsive:true});
+      return;
+    }
+
+    /* helper interno */
+    const makePie=(div,labels,values,title)=>{
+      const mob=isMobile();
+      Plotly.newPlot(div,[{
+          type:'pie',
+          labels:labels.map(abbreviate),
+          values,
+          hole:.35,
+          textinfo:'none',
+          hovertemplate:'<b>%{label}</b><br>%{value:.2f} km²<br>%{percent}<extra></extra>'
+        }],{
+          template:'plotly_white',
+          title:{text:title,font:{size:mob?16:19}},
+          height:mob?280:400,
+          legend: mob ? {
+                    orientation:'h',x:.5,y:-.25,xanchor:'center',
+                    font:{size:9}
+                  } : {
+                    orientation:'v',x:1.05,y:.5,xanchor:'left',
+                    yanchor:'middle',font:{size:11}
+                  },
+          margin: mob ? {l:10,r:10,t:42,b:70}
+                       : {l:10,r:140,t:50,b:30}
+        },{responsive:true});
+    };
+
+    /* pie1 ▸ UF */
+    const aggUF={};
+    feats.forEach(f=>{
+      const k=f.properties.UF||'—';
+      aggUF[k]=(aggUF[k]||0)+(+f.properties.DESMATAM_1||0);
+    });
+    makePie(pie1Div,Object.keys(aggUF),Object.values(aggUF),);
+
+    /* pie2 ▸ TOP-10 área de proteção */
+    const aggAP={};
+    feats.forEach(f=>{
+      const k=stripPrefix(f.properties.NOME||'—');
+      aggAP[k]=(aggAP[k]||0)+(+f.properties.DESMATAM_1||0);
+    });
+    const top10=Object.entries(aggAP).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    makePie(pie2Div,top10.map(t=>t[0]),top10.map(t=>t[1]),
+             );
+  };
+
+  /* ------------ TABELA DATATABLES ----------------------------- */
+  let dtInstance=null;
+  const renderTable=(m,u,uf)=>{
+    const rows=filter(m,u,uf)
+                .sort((a,b)=>(+b.properties.DESMATAM_1||0)-(+a.properties.DESMATAM_1||0))
+                .slice(0,10)
+                .map(f=>{
+                  const p=f.properties;
+                  return[
+                    stripPrefix(p.NOME||'—'),
+                    +p['FOCOS DE C']||0,
+                    +p['N DE CAR']  ||0,
+                    +p['CAR']       ||0,
+                    +p['ESTRADAS N']||0
+                  ];
+                });
+    if(!dtInstance){
+      dtInstance=$('#top-table').DataTable({
+        data:rows,paging:false,searching:false,info:false,order:[]
+      });
+    }else{
+      dtInstance.clear();dtInstance.rows.add(rows).draw();
+    }
+  };
+
+  /* filtros & interações */
+  const currentFilters=()=>[
+    document.getElementById('modalidade-filter').value||null,
+    document.getElementById('uso-filter').value       ||null,
+    document.getElementById('uf-filter').value        ||null
+  ];
+  const refreshAll=()=>{
+    const [m,u,uf]=currentFilters();
+    if(mapLoaded)makePolygons(filter(m,u,uf));
+    renderBar(m,u,uf);
+    renderPies(m,u,uf);
+    renderTable(m,u,uf);
+  };
+  ['modalidade-filter','uso-filter','uf-filter'].forEach(id=>{
+    document.getElementById(id).addEventListener('change',refreshAll);
+  });
+  document.getElementById('reset-btn').addEventListener('click',()=>{
+    document.getElementById('modalidade-filter').value='';
+    document.getElementById('uso-filter').value       ='';
+    document.getElementById('uf-filter').value        ='';
+    refreshAll();
+  });
+
+  /* download CSV */
+  document.getElementById('download-btn').addEventListener('click',()=>{
+    const [m,u,uf]=currentFilters();
+    const feats=filter(m,u,uf);
+    const header='NOME,DESMATAM_1,MODALIDADE,USO,UF\n';
+    const csv=feats.map(f=>{
+      const p=f.properties;
+      return[`"${p.NOME||''}"`,p.DESMATAM_1||'',p.MODALIDADE||'',p.USO||'',p.UF||''].join(',');
+    }).join('\n');
+    saveAs(new Blob([header+csv],{type:'text/csv;charset=utf-8'}),'areas_filtradas.csv');
+  });
+
+  /* chamada inicial */
+  renderBar();renderPies();renderTable();
+
+})().catch(err=>console.error('[Dashboard Error]',err));
+}
+</script>
+</body>
+</html>

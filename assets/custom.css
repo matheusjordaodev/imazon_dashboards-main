@@ -1,0 +1,7 @@
+/* assets/custom.css */
+
+.btn-warning {
+  background-color: #FEC10E !important;  /* ajuste como preferir */
+  border-color:     #FEC10E !important;
+  color: #000;                            /* texto escuro para contraste */
+}

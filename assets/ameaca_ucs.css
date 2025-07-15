@@ -1,0 +1,15 @@
+.filter-label{
+  font-weight:700;
+  white-space:nowrap;
+}
+.filter-dropdown{width:100%;}
+@media (max-width:576px){.filter-card-body{padding:1rem;}}
+/* assets/hide_scrollbars.css */
+html, body{
+  overflow: auto;          /* continua rolando normalmente */
+  scrollbar-width: none;   /* Firefox */
+  -ms-overflow-style: none;/* IE/Edge legado */
+}
+html::-webkit-scrollbar{
+  display: none;           /* Chrome, Safari, Android */
+}

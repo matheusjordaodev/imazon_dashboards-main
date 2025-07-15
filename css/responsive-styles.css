@@ -1,0 +1,76 @@
+/* Estilos responsivos */
+
+/* Pequenos dispositivos (telefones, 576px e abaixo) */
+@media (max-width: 575.98px) {
+  .custom-button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .col-auto {
+    width: 100%;
+  }
+  .card-body {
+    padding: 10px !important;
+  }
+  #bar-settlement, #line-graph, #yearly-graph {
+    height: 300px !important;
+  }
+  .modal-dialog {
+    margin: 10px;
+  }
+}
+
+/* Dispositivos médios (tablets, 768px e abaixo) */
+@media (max-width: 767.98px) {
+  .custom-button {
+    margin-bottom: 5px;
+  }
+  .col-md-6 {
+    width: 100%;
+  }
+  #bar-settlement, #line-graph, #yearly-graph {
+    height: 350px !important;
+  }
+}
+
+/* Dispositivos grandes (desktops, 992px e abaixo) */
+@media (max-width: 991.98px) {
+  #bar-settlement, #line-graph, #yearly-graph {
+    height: 400px !important;
+  }
+}
+
+/* Dispositivos extra grandes (desktops grandes, 1200px e acima) */
+@media (min-width: 1200px) {
+  #bar-settlement, #line-graph, #yearly-graph {
+    height: 450px;
+  }
+}
+
+/* Ajustes gerais para gráficos */
+.js-plotly-plot .plotly .modebar {
+  display: none !important;
+}
+
+.js-plotly-plot {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.map-container {
+  height: 450px;
+}
+
+@media (max-width: 767.98px) {
+  .map-container {
+    height: 350px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .map-container {
+    height: 300px;
+  }
+}
+
+

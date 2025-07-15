@@ -1,0 +1,26 @@
+/* assets/responsive.css */
+
+/* altura reduzida p/ mapa e gráficos em telas pequenas */
+@media (max-width: 767.98px) {
+  .map-container   { height: 48vh !important; }
+  .graph-container { height: 380px !important; }
+}
+
+/* afinamos padding horizontal das colunas de filtros em desktop */
+@media (min-width: 768px) {
+  .filters-row > .col {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+}
+
+/* fonte menor na DataTable em telas muito estreitas */
+@media (max-width: 575.98px) {
+  .dash-table-container .dash-table {
+    font-size: 0.78rem;
+  }
+  .card-header { font-size: 0.9rem; }
+}
+
+/* rolagem horizontal suave na DataTable (mobile) */
+.dash-table-container { overflow-x: auto; }

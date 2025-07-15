@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAD Degradação – ImazonGeo</title>
+
+  <!-- Fontes & Ícones -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --h-toolbar : 70px;      /* altura da barra superior                */
+      --h-footer  : 45px;      /* altura do footer (se quiser remover, ok) */
+      --c-main    : #007C4F;   /* verde principal                          */
+      --c-main-hv : #00955d;   /* verde p/ hover no ativo                  */
+      --c-dark    : #495057;   /* cinza ícones / texto inativos            */
+      --c-light   : #ffffff;   /* branco                                   */
+      --t-fast    : .25s ease; /* tempo padrão de transição                */
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:'Montserrat',sans-serif;overflow:hidden}
+
+    /* ----------------- TOOLBAR ------------------ */
+    #toolbar{
+      position:fixed;z-index:1000;top:0;left:0;right:0;height:var(--h-toolbar);
+      display:flex;align-items:center;background:#f8f9fa;border-bottom:1px solid #e0e0e0;
+    }
+    .toolbar-nav{display:flex;height:100%}
+
+    .toolbar-btn{
+      width:140px;             /* largura fixa - ajuste como quiser  */
+      height:100%;             /* ocupa altura total da barra        */
+      border:none;outline:none;background:transparent;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      color:var(--c-dark);gap:4px;font-size:.83rem;user-select:none;
+      transition:background var(--t-fast),color var(--t-fast);
+    }
+    .toolbar-btn i{font-size:1.5rem;transition:color var(--t-fast),opacity var(--t-fast)}
+    .toolbar-btn:hover:not(.active){
+      background:rgba(0,0,0,.05);
+      color:var(--c-main);
+    }
+    .toolbar-btn:hover:not(.active) i{color:var(--c-main);opacity:.9}
+
+    /* estado ativo ----------------------- */
+    .toolbar-btn.active{
+      background:var(--c-main);color:var(--c-light);
+    }
+    .toolbar-btn.active i{color:var(--c-light)}
+    .toolbar-btn.active:hover{background:var(--c-main-hv)} /* leve variação no hover */
+
+    /* logo à direita --------------------- */
+    .toolbar-logo{
+      margin-left:auto;margin-right:20px;height:38px;   /* ajuste altura p/ caber */
+      object-fit:contain;cursor:pointer;
+      transition:opacity var(--t-fast);
+    }
+    .toolbar-logo:hover{opacity:.8}
+
+    /* --------------- CONTEÚDO -------------- */
+    #content{position:absolute;top:var(--h-toolbar);left:0;right:0;bottom:var(--h-footer)}
+    #dashboard-iframe{
+      width:100%;height:100%;border:0;opacity:1;transition:opacity var(--t-fast);background:#fff;
+    }
+
+    /* --------------- FOOTER (opcional) -------------- */
+    footer{
+      position:fixed;left:0;right:0;bottom:0;height:var(--h-footer);
+      display:flex;align-items:center;justify-content:center;
+      background:var(--c-main);color:var(--c-light);font-size:.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- TOOLBAR -->
+  <div id="toolbar">
+    <!-- botões lado esquerdo -->
+    <div class="toolbar-nav">
+      <button class="toolbar-btn" data-src="SAD/desmatamento_assentamentos.html">
+        <i class="fas fa-location-dot"></i><span>Assentamentos</span>
+      </button>
+      
+      <button class="toolbar-btn" data-src="SAD/desmatamento_estados.html">
+        <i class="fas fa-location-dot"></i><span>Estados</span>
+      </button>
+      <button class="toolbar-btn active" data-src="SAD/desmatamento_municipios.html">
+        <i class="fas fa-map"></i><span>Municípios</span>
+      </button>
+      <button class="toolbar-btn" data-src="SAD/desmatamento_unidades_de_conservacao.html">
+        <i class="fas fa-leaf"></i><span>Unidades de Conservação</span>
+      </button>
+      <button class="toolbar-btn" data-src="SAD/desmatamento_terras_indigenas.html">
+        <i class="fas fa-campground"></i><span>Áreas Indígenas</span>
+      </button>
+    </div>
+
+    <!-- logo lado direito (troque o src pela sua imagem) -->
+    <img class="toolbar-logo" src="../../img/Logo_SAD_rgb.png" alt="ImazonGeo">
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div id="content">
+    <iframe id="dashboard-iframe" src="SAD/desmatamento_municipios.html" loading="lazy"></iframe>
+  </div>
+
+
+
+  <!-- SCRIPT -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const iframe      = document.getElementById('dashboard-iframe');
+      const toolbarBtns = document.querySelectorAll('.toolbar-btn');
+
+      toolbarBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.classList.contains('active')) return;  // já está na aba
+          /* estado visual ---------------------------------------------- */
+          toolbarBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          /* fade -------------------------------------------------------- */
+          iframe.style.opacity = 0;
+          const newURL = btn.dataset.src;
+          setTimeout(() => { iframe.src = newURL; }, 120);
+        });
+      });
+
+      iframe.addEventListener('load', () => { iframe.style.opacity = 1; });
+    });
+  </script>
+</body>
+</html>

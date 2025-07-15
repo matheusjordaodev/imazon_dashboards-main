@@ -1,0 +1,19 @@
+.filter-label{
+  font-weight:700;      /* negrito */
+  white-space:nowrap;   /* largura apenas do texto */
+}
+.filter-dropdown{
+  width:100%;           /* ocupa toda a coluna */
+}
+@media (max-width:576px){
+  .filter-card-body{padding:1rem;}   /* diminui padding em smartphones */
+}
+/* assets/hide_scrollbars.css */
+html, body{
+  overflow: auto;          /* continua rolando normalmente */
+  scrollbar-width: none;   /* Firefox */
+  -ms-overflow-style: none;/* IE/Edge legado */
+}
+html::-webkit-scrollbar{
+  display: none;           /* Chrome, Safari, Android */
+}

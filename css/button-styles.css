@@ -1,0 +1,175 @@
+/* button-styles.css */
+/* container do botão agora fica “pequeno” e centraliza no pai */
+/* button-styles.css */
+.map-container {
+  position: relative !important;  /* garante o contexto */
+}
+
+/* visele o container dentro de .map-container */
+.map-container > #map-load-btn-container {
+  position: absolute !important;
+  top: 50%     !important;
+  left: 50%    !important;
+  transform: translate(-50%, -50%) !important;
+  width: auto;   /* só o suficiente para o botão */
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255,255,255,0.8);
+  padding: 8px;
+  z-index: 1000;
+}
+
+
+/* seu botão suave continua igual */
+#load-map-btn {
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  background: linear-gradient(to bottom, #3ac47d 0%, #28a745 100%);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: transform .2s ease, box-shadow .2s ease, background .3s ease;
+}
+#load-map-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  background: linear-gradient(to bottom, #4dd396 0%, #36b55b 100%);
+}
+
+
+/* button-styles.css */
+
+/* 1) Definição da paleta de verdes */
+:root {
+  --green-light: #3ac47d;
+  --green-base:  #28a745;
+  --green-dark:  #1e7e34;
+}
+
+/* 2) Estilo base para todos os botões */
+.btn {
+  border-radius: 0.75rem;                 /* cantos mais arredondados */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);   /* sombra suave */
+  transition:
+    transform 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out,
+    background 0.3s ease-in-out,
+    color 0.3s ease-in-out;
+}
+
+.btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 3) Botão “Suave” Carregar Mapa (reaproveita .btn) */
+#map-load-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  background: linear-gradient(
+    to bottom,
+    var(--green-light) 0%,
+    var(--green-base) 100%
+  );
+  border: none;
+  color: #fff;
+}
+#map-load-btn:hover {
+  background: linear-gradient(
+    to bottom,
+    var(--green-base) 0%,
+    var(--green-dark) 100%
+  );
+}
+
+/* 4) Reestilizando .btn-success e variantes */
+.btn-success {
+  background: linear-gradient(
+    to bottom,
+    var(--green-light),
+    var(--green-base)
+  );
+  border: none;
+  color: #fff;
+}
+.btn-success:hover {
+  background: linear-gradient(
+    to bottom,
+    var(--green-base),
+    var(--green-dark)
+  );
+}
+
+/* 5) Outros tipos de botões */
+.btn-info {
+  background: linear-gradient(to bottom, #17a2b8, #138496);
+  border: none;
+  color: #fff;
+}
+.btn-info:hover {
+  background: linear-gradient(to bottom, #138496, #117a8b);
+}
+
+.btn-outline-secondary {
+  border: 2px solid var(--green-base);
+  color: var(--green-base);
+  background: transparent;
+}
+.btn-outline-secondary:hover {
+  background: var(--green-base);
+  color: #fff;
+}
+
+/* 6) Ajuste de tamanhos */
+.btn-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+}
+.btn-lg {
+  padding: 0.75rem 1.25rem;
+  font-size: 1.25rem;
+}
+/* Em button-styles.css */
+/* botões “suaves” e consistentes */
+.btn, #load-map-btn {
+  border-radius: 0.75rem;
+  color: #fff;
+  transition: background .3s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+/* estado normal */
+.btn-success,
+#load-map-btn {
+  background: linear-gradient(
+    to bottom,
+    var(--brand-light) 0%,
+    var(--brand)       100%
+  );
+  border: none;
+}
+
+/* hover / focus */
+.btn-success:hover,
+#load-map-btn:hover {
+  background: linear-gradient(
+    to bottom,
+    var(--brand)      0%,
+    var(--brand-dark) 100%
+  );
+}
+
+#interest-btn {
+  background-color: #28a745; /* verde customizado */
+  border-color: #1e7e34;
+  color: #ffffff;
+}
+
+#interest-btn:hover, 
+#interest-btn:focus {
+  background-color: #218838; /* tom de hover */
+  border-color: #1e7e34;
+  color: #ffffff;
+}
