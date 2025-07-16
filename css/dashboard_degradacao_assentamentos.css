@@ -1,0 +1,65 @@
+/* =========================================================
+   Estilos exclusivos do dashboard SAD – Assentamentos
+   ========================================================= */
+
+/* ---------- Cabeçalhos dos cards ---------- */
+.card-header{
+  font-weight: 700;               /* negrito */
+  color: #6c757d;                 /* cinza suave */
+  background-color: #f9f9f9;      /* sutil para separar do fundo */
+}
+
+/* ---------- Ajustes responsivos ------------ */
+
+/* Telefones (<576 px) */
+@media (max-width:575.98px){
+  .custom-button{width:100%;margin-bottom:10px;font-size:12px;}
+  .col-auto{width:100%;}
+  .card-body{padding:5px!important;}
+  .card-header{font-size:12px;padding:8px;}
+  #bar-settlement,#line-graph,#yearly-graph{height:280px!important;}
+  .map-container{height:280px;}
+  .modal-dialog{margin:10px;}
+  .container-fluid{padding-left:10px;padding-right:10px;}
+}
+
+/* Tablets (<768 px) */
+@media (max-width:767.98px){
+  .custom-button{margin-bottom:5px;font-size:13px;}
+  .col-md-6{width:100%;}
+  .card-header{font-size:13px;}
+  #bar-settlement,#line-graph,#yearly-graph{height:320px!important;}
+  .map-container{height:320px;}
+}
+
+/* Notebooks (<992 px) */
+@media (max-width:991.98px){
+  .card-header{font-size:14px;}
+  #bar-settlement,#line-graph,#yearly-graph{height:380px!important;}
+}
+
+/* Desktops grandes (≥1200 px) */
+@media (min-width:1200px){
+  #bar-settlement,#line-graph,#yearly-graph{height:450px;}
+  .map-container{height:450px;}
+}
+
+/* ---------- Plotly: remove modebar ---------- */
+.js-plotly-plot .plotly .modebar{display:none!important;}
+.js-plotly-plot{width:100%!important;height:100%!important;}
+
+/* ---------- Legenda do mapa ---------- */
+.heat-legend{
+  position:absolute;
+  bottom:12px;
+  left:12px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.9);
+  border:1px solid #ccc;
+  border-radius:4px;
+  font-size:12px;
+  line-height:1;
+}
+.heat-legend h4{margin:0 0 4px;font-size:13px;font-weight:600;color:#555;}
+.legend-gradient{height:8px;width:120px;margin-bottom:4px;border-radius:2px;}
+.legend-labels{display:flex;justify-content:space-between;font-size:11px;color:#555;}

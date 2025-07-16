@@ -1,37 +1,149 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<title>SAD – Assentamentos</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <title>SAD – Assentamentos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- libs CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- seus CSS personalizados -->
+  <link rel="stylesheet" href="../../../css/base-styles.css">
+  <link rel="stylesheet" href="../../../css/map-styles.css">
+  <link rel="stylesheet" href="../../../css/button-styles.css">
+  <link rel="stylesheet" href="../../../css/legend-styles.css">
+  <link rel="stylesheet" href="../../../css/card-styles.css">
+  <link rel="stylesheet" href="../../../css/controls-styles.css">
+  <link rel="stylesheet" href="../../../css/select-styles.css">
+  <link rel="stylesheet" href="../../../css/modal-styles.css">
 
+  <style>
+  /* Apenas os estilos necessários para as alterações solicitadas */
+  .card-header {
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .heat-legend {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+  }
 
-<!-- libs CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  .heat-legend h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+  }
 
-<link rel="stylesheet" href="../../../css/base-styles.css">
-<link rel="stylesheet" href="../../../css/map-styles.css">
-<link rel="stylesheet" href="../../../css/button-styles.css">
-<link rel="stylesheet" href="../../../css/legend-styles.css">
-<link rel="stylesheet" href="../../../css/card-styles.css">
-<link rel="stylesheet" href="../../../css/controls-styles.css">
-<link rel="stylesheet" href="../../../css/select-styles.css">
-<link rel="stylesheet" href="../../../css/responsive-styles.css">
-<link rel="stylesheet" href="../../../css/modal-styles.css">
-<link rel="stylesheet" href="../../../css/card-styles.css">
+  .legend-gradient {
+    height: 150px;
+    width: 20px;
+    margin: 0 auto;
+  }
+
+  .legend-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 150px;
+    margin-top: -150px;
+    text-align: right;
+  }
+  .legend-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 5px 0;
+}
+
+.legend-gradient {
+    width: 20px;
+    height: 100px;  /* Altura do gradiente (ajuste conforme necessário) */
+    border-radius: 3px;
+}
+
+.legend-scale {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100px;  /* Mesma altura do gradiente! */
+}
+
+.legend-max { align-self: flex-start; }
+.legend-min { align-self: flex-end; }
+
+.legend-meta {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+  .legend-labels span {
+    transform: translateY(50%);
+  }
+  .header{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:28px;
+    }
+    .header-logo{
+      max-width:160px;
+      height:auto;
+    }
+    .subtitle{
+      font-size:1.1rem;
+      font-weight:500;
+      color:var(--dark-gray);
+      margin-top:6px;
+      text-align:center;
+    }
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      border:0;
+    }
+
+  </style>
 </head>
+  <!-- Header Ameaça e Pressão -->
 
+  </header>
 <body class="py-3">
+    <header class="header">
+    <!-- logotipo central -->
+    <img src="../../../img/Logo_SAD_rgb.png" alt="Ameaça e Pressão" class="header-logo">
+
+    <!-- sub‑título imediatamente abaixo -->
+    <p class="subtitle">
+      Análise de Área Acumulada na Amazônia Legal
+    </p>
+
+    <!-- h1 escondido para SEO/acessibilidade -->
+    <h1 class="sr-only">Ameaça e Pressão</h1>
 <div class="container-fluid" id="app-root">
 
   <!-- botões principais -->
-  <div class="container-fluid px-3 px-md-5" id="app-root">
-
-  <!-- toolbar principal -->
-  <div class="row mb-5 gy-2 align-items-center">
+  <div class="row mb-3 gy-2">
     <div class="col-auto">
       <button id="reset-btn" class="btn btn-success btn-sm custom-button">
         <i class="fa fa-filter me-1"></i>Remover Filtros
@@ -47,30 +159,36 @@
         <i class="fa fa-download me-1"></i>Baixar CSV
       </button>
     </div>
-    <div class="col-auto d-flex align-items-center">
-     <button id="interest-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#interest-modal">
-    Selecionar Área de Interesse
-  </button>
-      <label for="year-select" class="me-2 mb-0 fw-bold">Ano:</label>
-      <select id="year-select" class="form-select form-select-sm year-select"></select>
+    <div class="col-auto">
+      <button id="interest-btn" class="btn btn-success btn-sm custom-button" data-bs-toggle="modal" data-bs-target="#interest-modal">
+        Selecionar Área de Interesse
+      </button>
     </div>
   </div>
+
+  <!-- filtros -->
+  <div class="row g-2 align-items-end mb-4">
+    <div class="col-auto fw-bold">Ano:</div>
+    <div class="col-6 col-md-3">
+      <select id="year-select" class="form-select form-select-sm"></select>
+    </div>
+  </div>
+
   <!-- barra + mapa -->
   <div class="row gx-2 mb-4">
     <div class="col-12 col-md-6 mb-4 mb-md-0">
       <div class="card h-100">
-        <div class="card-header">Alerta de Desmatamento Florestal Acumulado Top 10</div>
-        <div class="card-body p-0"><div id="bar-settlement" style="height:450px"></div></div>
+        <div class="card-header">Alerta de Degradação Florestal Acumulado</div>
+        <div class="card-body p-0">
+          <div id="bar-settlement"></div>
+        </div>
       </div>
     </div>
     <div class="col-12 col-md-6">
       <div class="card h-100">
-        <div class="card-header" id="map-title">Mapa de Desmatamento  (km²)</div>
+        <div class="card-header" id="map-title">Mapa de Degradação Ambiental (km²)</div>
         <div class="card-body p-0 map-container">
           <div id="map-graph" style="height:100%"></div>
-          <div id="map-load-btn-container">
-            <button id="load-map-btn" class="btn btn-success"><i class="fas fa-map me-2"></i>Carregar Mapa</button>
-          </div>
         </div>
       </div>
     </div>
@@ -81,95 +199,103 @@
     <div class="col-12 col-md-6 mb-4 mb-md-0">
       <div class="card h-100">
         <div class="card-header">
-           Alertas de Desmatamento Florestal Acumulado – Assentamentos por Estado
+          Alertas de Degradação Florestal Acumulado – Assentamentos por Estado
         </div>
-        <div class="card-body p-0"><div id="line-graph" style="height:450px"></div></div>
+        <div class="card-body p-0">
+          <div id="line-graph" style="height:450px"></div>
+        </div>
       </div>
     </div>
     <div class="col-12 col-md-6">
       <div class="card h-100">
-        <div class="card-header">Área Total de Desmatamento por Ano (km²)</div>
-        <div class="card-body p-0"><div id="yearly-graph" style="height:450px"></div></div>
+        <div class="card-header">Área Total de Degradação por Ano (km²)</div>
+        <div class="card-body p-0">
+          <div id="yearly-graph" style="height:450px"></div>
+        </div>
       </div>
     </div>
   </div>
 
 </div><!-- /container -->
 
-<!-- modais (idênticos ao original, apenas com labels se necessário) -->
-<!-- ─── MODAIS ─────────────────────────────────────────────────── -->
+<!-- MODAIS -->
 <!-- estados -->
 <div class="modal fade" id="state-modal" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header">
-      <h5 class="modal-title">Escolha os Municípios</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Escolha os Estados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <select id="state-select" class="form-select" multiple size="8"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+      </div>
     </div>
-    <div class="modal-body">
-      <select id="state-select" class="form-select" multiple size="8"></select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
-    </div>
-  </div></div>
+  </div>
 </div>
 
 <!-- download -->
 <div class="modal fade" id="download-modal" tabindex="-1">
-  <div class="modal-dialog modal-lg"><div class="modal-content">
-    <div class="modal-header">
-      <h5 class="modal-title">Configurações de Download</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-    </div>
-    <div class="modal-body">
-      <div id="download-state-checklist" class="mb-3"></div>
-      <hr>
-      <div class="mb-2">
-        <label class="me-2">Separador decimal</label>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="dec-sep" id="dec-dot" value="." checked>
-          <label class="form-check-label" for="dec-dot">Ponto</label>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configurações de Download</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="download-state-checklist" class="mb-3"></div>
+        <hr>
+        <div class="mb-2">
+          <label class="me-2">Separador decimal</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="dec-sep" id="dec-dot" value="." checked>
+            <label class="form-check-label" for="dec-dot">Ponto</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value="," >
+            <label class="form-check-label" for="dec-comma">Vírgula</label>
+          </div>
         </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value=",">
-          <label class="form-check-label" for="dec-comma">Vírgula</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="remove-accents">
+          <label class="form-check-label" for="remove-accents">Sem acentuação</label>
         </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="remove-accents">
-        <label class="form-check-label" for="remove-accents">Sem acentuação</label>
+      <div class="modal-footer">
+        <button id="download-btn" class="btn btn-success me-2">Download</button>
+        <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
-    <div class="modal-footer">
-      <button id="download-btn" class="btn btn-success me-2">Download</button>
-      <button class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
-    </div>
-  </div></div>
+  </div>
 </div>
 
 <!-- áreas de interesse -->
 <div class="modal fade" id="interest-modal" tabindex="-1">
-  <div class="modal-dialog modal-lg"><div class="modal-content">
-    <div class="modal-header">
-      <h5 class="modal-title">Selecionar Áreas de Interesse</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-    </div>
-    <div class="modal-body">
-      <div class="search-box">
-        <input type="text" id="settlement-search" class="form-control" placeholder="Buscar assentamento…">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar Áreas de Interesse</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="selection-info">
-        <span id="selected-count">0</span> selecionados
+      <div class="modal-body">
+        <div class="search-box">
+          <input type="text" id="settlement-search" class="form-control" placeholder="Buscar assentamento…">
+        </div>
+        <div class="selection-info">
+          <span id="selected-count">0</span> selecionados
+        </div>
+        <div id="settlement-list" class="settlement-list"></div>
       </div>
-      <div id="settlement-list" class="settlement-list"></div>
+      <div class="modal-footer">
+        <button id="clear-selection" class="btn btn-outline-secondary">Limpar Seleção</button>
+        <button id="apply-selection" class="btn btn-success">Aplicar Seleção</button>
+      </div>
     </div>
-    <div class="modal-footer">
-      <button id="clear-selection" class="btn btn-outline-secondary">Limpar Seleção</button>
-      <button id="apply-selection" class="btn btn-success">Aplicar Seleção</button>
-    </div>
-  </div></div>
+  </div>
 </div>
-
 
 <!-- libs JS -->
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
@@ -179,38 +305,168 @@
 
 <script type="module">
 (async () => {
-  const GEOJSON_URL = "/dataset/sad/geojson/AMZ_estados.geojson";
-  const CSV_URL     = "/dataset/sad/csv/alertas_sad_degradacao_09_2008_04_2024_municipio.csv";
-  const normUF      = s => (s||'').toString().toUpperCase();
+  const GEOJSON_URL = "/dataset/sad/geojson/AMZ_assentamentos.geojson";
+  const CSV_URL     = "/dataset/sad/csv/alertas_sad_degradacao_09_2008_04_2024_assentamento.csv";
+  const normUF      = s => (s||"").toString().toUpperCase();
   const CSV_UF_KEY  = 'ESTADO';
   const BRAZIL_BOUNDS = L.latLngBounds(
     L.latLng(-34.0, -74.0),
     L.latLng(  5.5, -34.0)
   );
 
-  // variáveis globais
   let geojson, df = [], years = [], ufs = [], allSet = [];
   let selUF = [], selSet = [], curYear, barSet = [];
-  let mapInit = false, leafletMap, geoLayer, legend, NAME_KEY='MUNICIPIO';
+  let mapInit=false, leafletMap, geoLayer, legend;
+  let NAME_KEY='NOME_PROJ2'; // ajuste conforme propriedade do seu GeoJSON
 
   // DOM
-  const stateBtn        = document.getElementById('state-btn');
-  const stateSelect     = document.getElementById('state-select');
-  const resetBtn        = document.getElementById('reset-btn');
-  const yearSelect      = document.getElementById('year-select');
-  const loadMapBtn      = document.getElementById('load-map-btn');
-  const mapBtnContainer = document.getElementById('map-load-btn-container');
-  const settlementList  = document.getElementById('settlement-list');
-  const settlementSearch= document.getElementById('settlement-search');
-  const selectedCount   = document.getElementById('selected-count');
-  const clearSel        = document.getElementById('clear-selection');
-  const applySel        = document.getElementById('apply-selection');
-  const downloadBtn     = document.getElementById('download-btn');
-  const downloadStateBox= document.getElementById('download-state-checklist');
-  const decSepSelector  = 'input[name="dec-sep"]:checked';
-  const removeAccentsChk= document.getElementById('remove-accents');
+  const stateBtn         = document.getElementById('state-btn');
+  const stateSelect      = document.getElementById('state-select');
+  const resetBtn         = document.getElementById('reset-btn');
+  const yearSelect       = document.getElementById('year-select');
+  const settlementList   = document.getElementById('settlement-list');
+  const settlementSearch = document.getElementById('settlement-search');
+  const selectedCount    = document.getElementById('selected-count');
+  const clearSel         = document.getElementById('clear-selection');
+  const applySel         = document.getElementById('apply-selection');
+  const downloadBtn      = document.getElementById('download-btn');
+  const downloadStateBox = document.getElementById('download-state-checklist');
+  const decSepSelector   = 'input[name="dec-sep"]:checked';
+  const removeAccentsChk = document.getElementById('remove-accents');
 
-  // carregar dados
+  // Função para obter configurações responsivas baseadas no tamanho da tela
+  function getResponsiveConfig() {
+    const width = window.innerWidth;
+    if (width <= 575) {
+      return {
+        titleSize: 12,
+        axisSize: 10,
+        tickSize: 9,
+        legendSize: 8,
+        margin: { l: 100, r: 10, t: 60, b: 40 },
+        height: 280
+      };
+    } else if (width <= 767) {
+      return {
+        titleSize: 14,
+        axisSize: 11,
+        tickSize: 10,
+        legendSize: 9,
+        margin: { l: 120, r: 15, t: 70, b: 45 },
+        height: 320
+      };
+    } else if (width <= 991) {
+      return {
+        titleSize: 16,
+        axisSize: 12,
+        tickSize: 11,
+        legendSize: 10,
+        margin: { l: 140, r: 20, t: 80, b: 50 },
+        height: 380
+      };
+    } else {
+      return {
+        titleSize: 18,
+        axisSize: 14,
+        tickSize: 12,
+        legendSize: 11,
+        margin: { l: 160, r: 20, t: 90, b: 50 },
+        height: 450
+      };
+    }
+  }
+
+  // Função para truncar texto longo
+  function truncateText(text, maxLength = 30) {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+
+  /**
+   * Função genérica para plotar gráfico de barras horizontais responsivo em Plotly.
+   */
+  function plotHorizontalBar({ containerId, data, titleTextMain, titleTextSub }) {
+    const config = getResponsiveConfig();
+    // Ordena decrescente
+    const arr = data.slice().sort((a, b) => b.value - a.value);
+    // Trunca labels dinamicamente
+    const maxNameLength = window.innerWidth <= 575 ? 20 : window.innerWidth <= 767 ? 25 : 30;
+    const truncatedNames = arr.map(d => truncateText(d.key, maxNameLength));
+    // Calcula margem esquerda dinâmica
+    const maxLen = truncatedNames.reduce((max, name) => Math.max(max, name.length), 0);
+    const leftMargin = Math.min(
+      config.margin.l + 100,
+      config.margin.l + maxLen * (config.tickSize * 0.6)
+    );
+    // Valores e textos formatados
+    const valores = arr.map(d => d.value);
+    const textos = arr.map(d => {
+      const decimals = window.innerWidth <= 575 ? 0 : 2;
+      return d.value.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + ' km²';
+    });
+    // Escala de cor
+    const maxVal = d3.max(valores) || 1;
+    const colorScale = d3.scaleLinear().domain([0, maxVal]).range([0.4, 1]);
+    const barColors = valores.map(v => {
+      const opacity = colorScale(v);
+      return `rgba(40,167,69,${opacity})`;
+    });
+    // Posições de texto
+    const mobile = window.innerWidth <= 575;
+    const textpositions = arr.map(_ => mobile ? 'inside' : 'outside');
+    const textcolors = arr.map(_ => mobile ? '#ffffff' : '#000000');
+
+    // Monta trace
+    const trace = {
+      x: valores,
+      y: truncatedNames,
+      type: 'bar',
+      orientation: 'h',
+      marker: {
+        color: barColors,
+        line: { color: '#1e7e34', width: 1 }
+      },
+      text: textos,
+      textposition: textpositions,
+      textfont: { size: config.tickSize, color: textcolors },
+      texttemplate: '%{text}',
+      hovertemplate: '<b>%{customdata}</b><br>Área: %{x:.2f} km²<extra></extra>',
+      customdata: arr.map(d => d.key)
+    };
+
+    // Título com principal + subtítulo
+    const titleHtml = 
+      `<span style="font-size:${config.titleSize}px; font-weight:bold; color:#555;">${titleTextMain}</span><br>` +
+      `<span style="font-size:${Math.round(config.titleSize * 0.8)}px; font-weight:bold; color:#888;">${titleTextSub}</span>`;
+
+    const layout = {
+      title: {
+        text: titleHtml,
+        x: 0.5,
+        xanchor: 'center',
+        yanchor: 'top'
+      },
+      margin: { l: leftMargin, r: config.margin.r, t: config.margin.t, b: config.margin.b },
+      height: config.height,
+      yaxis: {
+        automargin: true,
+        tickfont: { size: config.tickSize },
+        tickmode: 'linear'
+      },
+      xaxis: {
+        title: { text: 'Área (km²)', font: { size: config.axisSize } },
+        tickfont: { size: config.tickSize },
+        showgrid: true,
+        gridcolor: 'rgba(0,0,0,0.1)'
+      },
+      plot_bgcolor: 'rgba(255,255,255,1)',
+      paper_bgcolor: 'rgba(255,255,255,1)',
+      font: { size: config.tickSize }
+    };
+
+    Plotly.newPlot(containerId, [trace], layout, { displayModeBar: false, responsive: true });
+  }
+
   async function loadGeo(){ geojson = await (await fetch(GEOJSON_URL)).json(); }
   async function loadCsv(){
     const txt = await (await fetch(CSV_URL)).text();
@@ -222,19 +478,18 @@
     }));
   }
 
-  // inicializa filtros
   function buildFilters(){
     years = [...new Set(df.map(d=>d.ANO))].sort((a,b)=>a-b);
     curYear = Math.max(...years);
     yearSelect.innerHTML = years.map(y=>`<option>${y}</option>`).join('');
     yearSelect.value = curYear;
 
-    const geoUF = [...new Set( geojson.features.map(f=>normUF(f.properties.Estado)).filter(Boolean) )];
-    const csvUF = [...new Set( df.map(d=>d[CSV_UF_KEY]).filter(Boolean) )];
-    ufs = [...new Set([...geoUF, ...csvUF])].sort();
+    const geoUF = [...new Set(geojson.features.map(f=>normUF(f.properties.UF||f.properties.uf)).filter(Boolean))];
+    const csvUF = [...new Set(df.map(d=>d[CSV_UF_KEY]).filter(Boolean))];
+    ufs = [...new Set([...geoUF,...csvUF])].sort();
     stateSelect.innerHTML = ufs.map(u=>`<option value="${u}">${u}</option>`).join('');
 
-    allSet = [...ufs]; // para lista de interesse
+    allSet = [...new Set(df.map(d=>d.ASSENTAMEN))].sort();
     buildDownloadChecklist();
   }
 
@@ -249,62 +504,28 @@
     selUF = Array.from(stateSelect.selectedOptions).map(o=>o.value);
     updateStateBtn();
     let out = df.filter(d=>d.ANO===y)
-                .filter(d=>!selUF.length || selUF.includes(d[CSV_UF_KEY]));
-    if(selSet.length) out = out.filter(d=>selSet.includes(d[CSV_UF_KEY]));
+                .filter(d=>!selUF.length||selUF.includes(d[CSV_UF_KEY]));
+    if(selSet.length) out = out.filter(d=>selSet.includes(d.ASSENTAMEN));
     return out;
   }
 
-// gráfico de barras
-function plotBar(){
-  const data = base();
-  const agg = d3.rollup(data, v=>d3.sum(v,d=>d.AREAKM2), d=>d[CSV_UF_KEY]);
-  let arr = [...agg].map(([e,a])=>({Estado:e, area:a})).sort((a,b)=>b.area-a.area);
-  if(selSet.length) {
-    arr = arr.filter(d=>selSet.includes(d.Estado));
-  } else {
-    arr = arr.slice(0,10);
+  function plotBar() {
+    const dataArr = base();
+    const agg = d3.rollup(dataArr, v => d3.sum(v, d => d.AREAKM2), d => d.ASSENTAMEN);
+    let arr = [...agg].map(([a, area]) => ({ key: a, value: area }));
+    if (selSet.length) {
+      arr = arr.filter(d => selSet.includes(d.key));
+    } else {
+      arr = arr.slice().sort((a,b) => b.value - a.value).slice(0, 10);
+    }
+    barSet = arr.map(d => d.key);
+
+    const year = yearSelect.value;
+    const titleMain = 'Alerta de Degradação Florestal Acumulado';
+    const titleSub = `Área (${year}) – ${selSet.length ? 'Selecionados' : 'Top 10'}`;
+    plotHorizontalBar({ containerId: 'bar-settlement', data: arr, titleTextMain: titleMain, titleTextSub: titleSub });
   }
-  barSet = arr.map(d=>d.Estado);
 
-  // ajusta margem esquerda para comportar rótulos do eixo Y
-  const leftMargin = Math.min(300, 40 + Math.max(...arr.map(d=>d.Estado.length)) * 6);
-
-  // prepara os textos formatados, usando locale pt-BR e 2 casas decimais
-  const textValues = arr.map(d =>
-    d.area.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
-  );
-
-  Plotly.newPlot('bar-settlement', [{
-    x: arr.map(d=>d.area),
-    y: arr.map(d=>d.Estado),
-    type: 'bar',
-    orientation: 'h',
-    marker: {
-      color: '#28a745',
-      opacity: .8,
-      line: { color: '#1e7e34', width: 1 }
-    },
-    text: textValues,
-    textposition: 'auto',      // auto posiciona dentro ou fora conforme espaço
-    insidetextfont: { color: '#ffffff' },  // cor do texto quando dentro da barra
-    outsidetextfont: { color: '#000000' }  // cor do texto quando fora da barra
-  }], {
-    title: { text: `Área - Ano(${yearSelect.value})`, x: 0.5 },
-    margin: { l: leftMargin, r: 10, t: 50, b: 30 },
-    height: 450,
-    yaxis: { automargin: true },
-    xaxis: { title: 'Área (km²)' },
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    paper_bgcolor: 'rgba(0,0,0,0)'
-  }, {
-    displayModeBar: false,
-    responsive: true
-  });
-}
-
-
-
-  // inicializa o mapa
   function initMap(){
     if(mapInit) return;
     leafletMap = L.map('map-graph',{zoomSnap:.3,attributionControl:false,
@@ -313,41 +534,52 @@ function plotBar(){
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(leafletMap);
     legend = L.DomUtil.create('div','heat-legend'); legend.style.display='none';
     leafletMap.getContainer().appendChild(legend);
-    mapInit = true;
+    mapInit=true;
   }
-  function heatLegend(min,max,scale){
+
+  function heatLegend(min, max, scale) {
     legend.innerHTML = `
-      <h4>Área&nbsp;(km²)</h4>
-      <div class="legend-gradient"></div>
-      <div class="legend-labels">
-        <span>${max.toLocaleString()}</span>
-        <span>${((max+min)/2).toLocaleString()}</span>
-        <span>${min.toLocaleString()}</span>
-      </div>`;
-    legend.querySelector('.legend-gradient').style.background =
-      `linear-gradient(to top, ${scale(min)} 0%, ${scale((min+max)/2)} 50%, ${scale(max)} 100%)`;
-    legend.style.display='block';
-  }
+        <h4>Área (km²)</h4>
+        <div class="legend-container">
+            <div class="legend-gradient"></div>
+            <div class="legend-scale">
+                <span class="legend-max">${max.toLocaleString()}</span>
+                <span class="legend-min">${min.toLocaleString()}</span>
+            </div>
+        </div>
+       
+    `;
+
+    // Aplica o gradiente de cor
+    legend.querySelector('.legend-gradient').style.background = 
+        `linear-gradient(to top, ${scale(min)} 0%, ${scale(max)} 100%)`;
+
+    legend.style.display = 'block';
+}
+
   function plotMap(){
-    document.getElementById('map-title').textContent = `Mapa de Desmatamento Ambiental (km²) ${yearSelect.value}`;
+    document.getElementById('map-title').textContent = `Mapa de Degradação Ambiental (km²) ${yearSelect.value}`;
     if(!mapInit) return;
-    const data = base();
-    const agg  = d3.rollup(data, v=>d3.sum(v,d=>d.AREAKM2), d=>d[CSV_UF_KEY]);
+    const dataArr = base();
+    const agg  = d3.rollup(dataArr, v => d3.sum(v, d => d.AREAKM2), d => d.ASSENTAMEN);
     const show = selSet.length? selSet : barSet;
-    const maxVal = d3.max(show,e=>agg.get(e)||0)||1;
-    const color  = d3.scaleSequential().domain([0,maxVal]).interpolator(d3.interpolateYlOrRd);
-    heatLegend(0,maxVal,color);
+    const maxVal = d3.max(show, e => agg.get(e) || 0) || 1;
+    const color = d3.scaleSequential().domain([0,maxVal]).interpolator(d3.interpolateYlOrRd);
+    heatLegend(0, maxVal, color);
     if(geoLayer) geoLayer.remove();
     geoLayer = L.geoJSON(geojson,{
       coordsToLatLng:c=>L.latLng(c[1],c[0]),
-      filter:f=>show.includes(f.properties.Estado),
-      style:f=>({weight:1,color:'#555',fillOpacity:.7,fillColor:color(agg.get(f.properties.Estado)||0)}),
+      filter:f=>show.includes(f.properties[NAME_KEY]),
+      style:f=>({weight:1.2,color:'#555',fillOpacity:.75,fillColor:color(agg.get(f.properties[NAME_KEY])||0)}),
       onEachFeature:(f,layer)=>{
-        const est=f.properties.Estado, km2=agg.get(est)||0;
-        layer.bindTooltip(`<strong>${est}</strong><br>${km2.toLocaleString('pt-BR',{maximumFractionDigits:2})} km²`,{sticky:true});
-        layer.on({mouseover:e=>e.target.setStyle({weight:2,color:'#000'}).bringToFront(),
-                  mouseout:e=>geoLayer.resetStyle(e.target),
-                  click:e=>leafletMap.fitBounds(e.target.getBounds(),{maxZoom:8})});
+        const nome=f.properties[NAME_KEY];
+        const km2=agg.get(nome)||0;
+        layer.bindTooltip(`<strong>${nome}</strong><br>${km2.toLocaleString('pt-BR',{maximumFractionDigits:2})} km²`,{sticky:true});
+        layer.on({
+          mouseover:e=>e.target.setStyle({weight:2,color:'#000'}).bringToFront(),
+          mouseout:e=>geoLayer.resetStyle(e.target),
+          click:e=>leafletMap.fitBounds(e.target.getBounds(),{maxZoom:10})
+        });
       }
     }).addTo(leafletMap);
     if(geoLayer.getLayers().length){
@@ -356,142 +588,252 @@ function plotBar(){
     }
   }
 
-  // série histórica
   function plotLine(){
-    const sel = selSet.length? selSet : barSet;
-    const by  = d3.rollup(df,v=>d3.sum(v,d=>d.AREAKM2), d=>d[CSV_UF_KEY], d=>d.ANO);
+    const fil = df.filter(d=>
+      (!selUF.length || selUF.includes(d[CSV_UF_KEY])) &&
+      (!selSet.length || selSet.includes(d.ASSENTAMEN))
+    );
+    const by = d3.rollup(fil, v => d3.sum(v, d => d.AREAKM2), d=>d.ASSENTAMEN, d=>d.ANO);
     const pal = d3.schemeTableau10;
-    const series = sel.map((e,i)=>{
-      const mp = by.get(e); if(!mp) return null;
-      const anos = [...mp.keys()].sort((a,b)=>a-b);
-      return { name:e, x:anos, y:anos.map(y=>mp.get(y)), mode:'lines+markers',
-               line:{width:2,color:pal[i%pal.length]}, marker:{size:6,color:pal[i%pal.length]} };
-    }).filter(Boolean);
-    Plotly.newPlot('line-graph',series,{
-      title:{text:'Série Histórica por Estado',x:0.5},
-      xaxis:{title:'Ano'}, yaxis:{title:'Área (km²)'},
-      legend:{orientation:'h',x:0.5,xanchor:'center',y:-0.2},
-      margin:{l:50,r:20,t:50,b:50},height:450,
-      plot_bgcolor:'rgba(0,0,0,0)',paper_bgcolor:'rgba(0,0,0,0)'
-    },{displayModeBar:false,responsive:true});
-  }
+    const show = selSet.length? selSet : (barSet.length? barSet : [...by.keys()]);
+    const config = getResponsiveConfig();
+    const maxNameLength = window.innerWidth <= 575 ? 15 : window.innerWidth <= 767 ? 20 : 25;
 
-  // gráfico anual
-  function plotYearly(){
-    const agg = d3.rollup(df,v=>d3.sum(v,d=>d.AREAKM2), d=>d.ANO);
-    const anos = [...agg.keys()].sort((a,b)=>a-b);
-    const val  = anos.map(a=>agg.get(a)||0);
-    Plotly.newPlot('yearly-graph',[{
-      x:anos,y:val,type:'bar',
-      marker:{color:'rgba(40,167,69,0.7)',line:{width:1,color:'#1e7e34'}},
-      text:val.map(v=>v.toFixed(2)),textposition:'outside'
-    }],{
-      title:{text:'Área Total por Ano',x:0.5},
-      xaxis:{title:'Ano'},yaxis:{title:'Área (km²)'},
-      margin:{l:50,r:10,t:50,b:40},height:450,
-      plot_bgcolor:'rgba(0,0,0,0)',paper_bgcolor:'rgba(0,0,0,0)'
-    },{displayModeBar:false,responsive:true});
-  }
-
-  // lista de interesse
-  function refreshList(){
-    const term=(settlementSearch.value||'').toLowerCase();
-    settlementList.innerHTML = allSet
-      .filter(e=>e.toLowerCase().includes(term))
-      .map(e=>`<div class="settlement-item ${selSet.includes(e)?'selected':''}" data-name="${e}">${e}</div>`)
-      .join('');
-    selectedCount.textContent = selSet.length;
-    settlementList.querySelectorAll('.settlement-item').forEach(el=>{
-      el.onclick=()=>{ 
-        const n=el.dataset.name, ix=selSet.indexOf(n);
-        ix===-1?selSet.push(n):selSet.splice(ix,1);
-        refreshList();
+    const series = show.map((s, i) => {
+      const mp = by.get(s); if(!mp) return null;
+      const yrs = [...mp.keys()].sort((a,b)=>a-b);
+      return {
+        name: truncateText(s, maxNameLength),
+        x: yrs,
+        y: yrs.map(y=>mp.get(y)),
+        mode: 'lines+markers',
+        line: { width: 2, color: pal[i % pal.length] },
+        marker: { size: window.innerWidth <= 575 ? 4 : 6, color: pal[i % pal.length] },
+        hovertemplate: '<b>' + s + '</b><br>Ano: %{x}<br>Área: %{y:.2f} km²<extra></extra>'
       };
+    }).filter(Boolean);
+
+    Plotly.newPlot('line-graph', series, {
+      title: { text: '<b style="color:#555;">Série Histórica – Assentamentos</b>', x: 0.5, font: { size: config.titleSize } },
+      xaxis: { title: { text: 'Ano', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
+      yaxis: { title: { text: 'Área (km²)', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
+      legend: {
+        orientation: window.innerWidth <= 767 ? 'v' : 'h',
+        x: window.innerWidth <= 767 ? 1.02 : 0.5,
+        xanchor: window.innerWidth <= 767 ? 'left' : 'center',
+        y: window.innerWidth <= 767 ? 1 : -0.2,
+        font: { size: config.legendSize }
+      },
+      margin: {
+        l: config.margin.l - 50,
+        r: window.innerWidth <= 767 ? 120 : config.margin.r,
+        t: config.margin.t,
+        b: window.innerWidth <= 767 ? config.margin.b : config.margin.b + 60
+      },
+      height: config.height,
+      plot_bgcolor: 'rgba(255,255,255,1)',
+      paper_bgcolor: 'rgba(255,255,255,1)',
+      font: { size: config.tickSize }
+    }, {
+      displayModeBar: false,
+      responsive: true
     });
   }
 
-  function buildDownloadChecklist(){
-    downloadStateBox.innerHTML = ufs.map(uf=>`
-      <div class="form-check form-check-inline mb-1">
-        <input class="form-check-input dl-uf" type="checkbox" id="dl-${uf}" value="${uf}">
-        <label class="form-check-label" for="dl-${uf}">${uf}</label>
-      </div>`).join('');
-  }
-
-  function stripAccents(txt){
-    return txt.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  }
-  function objToCsvRow(obj,headers,decSep,noAcc){
-    return headers.map(h=>{
-      let v=obj[h]??'';
-      if(typeof v==='string') v=noAcc?stripAccents(v):v;
-      if(typeof v==='number'&&decSep===',') v=v.toString().replace('.',',');
-      return `"${String(v).replace(/"/g,'""')}"`;
-    }).join(';');
-  }
-
-  // eventos
-  [yearSelect,stateSelect].forEach(el=>el.onchange=()=>{ plotBar(); plotMap(); plotLine(); plotYearly(); });
-  resetBtn.onclick=()=>{
-    stateSelect.selectedIndex=-1; selUF=[]; yearSelect.value=curYear; selSet=[];
-    updateStateBtn(); plotBar(); plotMap(); plotLine(); plotYearly();
-  };
-  loadMapBtn.onclick=()=>{ initMap(); plotMap(); mapBtnContainer.style.display='none'; };
-  settlementSearch.oninput=refreshList;
-  clearSel.onclick=()=>{ selSet=[]; refreshList(); };
-  applySel.onclick=()=>{
-    bootstrap.Modal.getInstance(document.getElementById('interest-modal')).hide();
-    plotBar(); plotMap(); plotLine(); plotYearly();
-  };
-  downloadBtn.onclick=()=>{
-    const selUFs=Array.from(document.querySelectorAll('.dl-uf:checked')).map(el=>el.value);
-    const decSep=(document.querySelector(decSepSelector)||{}).value||'.';
-    const noAcc=removeAccentsChk.checked;
-    const rows=df.filter(d=>!selUFs.length||selUFs.includes(d[CSV_UF_KEY]));
-    if(!rows.length){alert('Nenhum registro encontrado para as UFs selecionadas.');return;}
-    const headers=Object.keys(rows[0]);
-    const lines=[headers.join(';'),...rows.map(r=>objToCsvRow(r,headers,decSep,noAcc))].join('\n');
-    const blob=new Blob([lines],{type:'text/csv;charset=utf-8;'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=`alertas_degradacao_${Date.now()}.csv`;
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},0);
-  };
-
-  
-
-  /* ─── inicialização ─── */
-  try{
-    await Promise.all([loadGeo(),loadCsv()]);
-
-    /* identifica coluna de nome no GeoJSON */
-    {
-      const sample=geojson.features[0]?.properties||{};
-      if(!('ASSENTAMEN' in sample)){
-        if('NOME_PROJ2' in sample) NAME_KEY='NOME_PROJ2';
-        else{
-          const alt=Object.keys(sample).find(k=>k.toLowerCase().startsWith('nome'));
-          if(alt) NAME_KEY=alt;
-        }
-      }
-      console.log('Campo-nome usado no GeoJSON →',NAME_KEY);
-    }
-
-    /* garante campo NAME_KEY também no CSV (para filtros) */
-    if(NAME_KEY!=='ASSENTAMEN'){
-      df.forEach(d=>{ d[NAME_KEY]=d.ASSENTAMEN; });
-    }
-
-    buildFilters(); updateStateBtn(); refreshList();
-    plotBar(); plotLine(); plotYearly();
-
-  }catch(e){
-    console.error(e);
-    document.getElementById('app-root').insertAdjacentHTML(
-      'afterbegin',`<div class="alert alert-danger">Erro: ${e.message}</div>`
+  function plotYearly(){
+    const dat = df.filter(d=>
+      (!selUF.length || selUF.includes(d[CSV_UF_KEY])) &&
+      (!selSet.length || selSet.includes(d.ASSENTAMEN))
     );
+    const agg = d3.rollup(dat, v => d3.sum(v, d => d.AREAKM2), d=>d.ANO);
+    const anos = [...agg.keys()].sort((a,b)=>a-b);
+    const val  = anos.map(a=>agg.get(a)||0);
+    const config = getResponsiveConfig();
+
+    Plotly.newPlot('yearly-graph', [{
+      x: anos,
+      y: val,
+      type: 'bar',
+      marker: { color: 'rgba(40,167,69,0.7)', line: { width: 1, color: '#1e7e34' } },
+      text: val.map(v => window.innerWidth <= 575 ? v.toFixed(0) : v.toFixed(2)),
+      textposition: window.innerWidth <= 575 ? 'inside' : 'outside',
+      textfont: { size: config.tickSize },
+      texttemplate: '%{text}',
+      hovertemplate: 'Ano: %{x}<br>Área Total: %{y:.2f} km²<extra></extra>'
+    }], {
+      title: { text: '<b style="color:#555;">Área Total por Ano</b>', x: 0.5, font: { size: config.titleSize } },
+      xaxis: { title: { text: 'Ano', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
+      yaxis: { title: { text: 'Área (km²)', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
+      margin: {
+        l: config.margin.l - 50,
+        r: config.margin.r,
+        t: config.margin.t,
+        b: config.margin.b
+      },
+      height: config.height,
+      plot_bgcolor: 'rgba(255,255,255,1)',
+      paper_bgcolor: 'rgba(255,255,255,1)',
+      font: { size: config.tickSize }
+    }, {
+      displayModeBar: false,
+      responsive: true
+    });
   }
+
+  function refreshList(){
+    const term = (settlementSearch.value||"").toLowerCase();
+    const filteredSet = allSet.filter(s=>s.toLowerCase().includes(term));
+    settlementList.innerHTML = filteredSet.map(s=>
+      `<div class="form-check">
+        <input class="form-check-input" type="checkbox" value="${s}" id="chk-${s}" ${selSet.includes(s)?'checked':''}>
+        <label class="form-check-label" for="chk-${s}">${s}</label>
+      </div>`
+    ).join('');
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount(){
+    selectedCount.textContent = selSet.length;
+  }
+
+  function buildDownloadChecklist(){
+    downloadStateBox.innerHTML = ufs.map(u=>
+      `<div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" value="${u}" id="dl-chk-${u}" checked>
+        <label class="form-check-label" for="dl-chk-${u}">${u}</label>
+      </div>`
+    ).join('');
+  }
+
+  function downloadCsv(){
+    const selectedUFs = Array.from(downloadStateBox.querySelectorAll('input[type="checkbox"]:checked')).map(c=>c.value);
+    const decimalSeparator = document.querySelector(decSepSelector).value;
+    const removeAccents = removeAccentsChk.checked;
+
+    let filteredDf = df.filter(d=>selectedUFs.includes(d[CSV_UF_KEY]));
+    if(selSet.length) filteredDf = filteredDf.filter(d=>selSet.includes(d.ASSENTAMEN));
+
+    let csvContent = "";
+    if (filteredDf.length > 0) {
+      const headers = Object.keys(filteredDf[0]);
+      csvContent += headers.join(";") + "\n";
+      filteredDf.forEach(row => {
+        const values = headers.map(header => {
+          let value = row[header];
+          if (typeof value === 'number') {
+            value = value.toString().replace('.', decimalSeparator);
+          }
+          if (removeAccents && typeof value === 'string') {
+            value = value.normalize("NFD").replace(/\p{M}/gu, "");
+          }
+          return value;
+        });
+        csvContent += values.join(";") + "\n";
+      });
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'dados_sad.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function resizeCharts() {
+    plotBar();
+    plotLine();
+    plotYearly();
+    plotMap();
+  }
+
+  // Event Listeners
+  stateSelect.addEventListener('change', () => {
+    plotBar();
+    plotLine();
+    plotYearly();
+    plotMap();
+  });
+
+  yearSelect.addEventListener('change', () => {
+    plotBar();
+    plotLine();
+    plotYearly();
+    plotMap();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    selUF = [];
+    selSet = [];
+    stateSelect.value = '';
+    yearSelect.value = curYear;
+    updateStateBtn();
+    refreshList();
+    plotBar();
+    plotLine();
+    plotYearly();
+    plotMap();
+  });
+
+  settlementSearch.addEventListener('keyup', refreshList);
+
+  settlementList.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      const value = e.target.value;
+      if (e.target.checked) {
+        if (!selSet.includes(value)) {
+          selSet.push(value);
+        }
+      } else {
+        selSet = selSet.filter(item => item !== value);
+      }
+      updateSelectedCount();
+    }
+  });
+
+  clearSel.addEventListener('click', () => {
+    selSet = [];
+    refreshList();
+  });
+
+  applySel.addEventListener('click', () => {
+    plotBar();
+    plotLine();
+    plotYearly();
+    plotMap();
+    const interestModal = bootstrap.Modal.getInstance(document.getElementById('interest-modal'));
+    interestModal.hide();
+  });
+
+  downloadBtn.addEventListener('click', downloadCsv);
+
+  window.addEventListener('resize', debounce(resizeCharts, 300));
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Initial load
+  await loadGeo();
+  await loadCsv();
+  buildFilters();
+  plotBar();
+  plotLine();
+  plotYearly();
+  refreshList();
+  initMap();
+  plotMap();
 })();
 </script>
+
 </body>
-</html>
+</html> 

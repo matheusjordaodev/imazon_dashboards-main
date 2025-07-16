@@ -10,124 +10,195 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <!-- seus CSS personalizados -->
-  <link rel="stylesheet" href="../../../css/base-styles.css">
-  <link rel="stylesheet" href="../../../css/map-styles.css">
-  <link rel="stylesheet" href="../../../css/button-styles.css">
-  <link rel="stylesheet" href="../../../css/legend-styles.css">
-  <link rel="stylesheet" href="../../../css/card-styles.css">
-  <link rel="stylesheet" href="../../../css/controls-styles.css">
-  <link rel="stylesheet" href="../../../css/select-styles.css">
-  <link rel="stylesheet" href="../../../css/modal-styles.css">
-
   <style>
+    .header{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:28px;
+    }
+    .header-logo{
+      max-width:160px;
+      height:auto;
+    }
+    .subtitle{
+      font-size:1.1rem;
+      font-weight:500;
+      color:var(--dark-gray);
+      margin-top:6px;
+      text-align:center;
+    }
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      border:0;
+    }
   /* Estilos responsivos aprimorados */
-
-  /* Pequenos dispositivos (telefones, 576px e abaixo) */
   @media (max-width: 575.98px) {
-    .custom-button {
-      width: 100%;
-      margin-bottom: 10px;
-      font-size: 12px;
-    }
-    .col-auto {
-      width: 100%;
-    }
-    .card-body {
-      padding: 5px !important;
-    }
-    .card-header {
-      font-size: 12px;
-      padding: 8px;
-    }
-    #bar-settlement, #line-graph, #yearly-graph {
-      height: 280px !important;
-    }
-    .modal-dialog {
-      margin: 10px;
-    }
-    .container-fluid {
-      padding-left: 10px;
-      padding-right: 10px;
-    }
+    .custom-button { width: 100%; margin-bottom: 10px; font-size: 12px; }
+    .col-auto { width: 100%; }
+    .card-body { padding: 5px !important; }
+    .card-header { font-size: 12px; padding: 8px; }
+    #bar-settlement, #line-graph, #yearly-graph { height: 280px !important; }
+    .modal-dialog { margin: 10px; }
+    .container-fluid { padding-left: 10px; padding-right: 10px; }
   }
 
-  /* Dispositivos médios (tablets, 768px e abaixo) */
   @media (max-width: 767.98px) {
-    .custom-button {
-      margin-bottom: 5px;
-      font-size: 13px;
-    }
-    .col-md-6 {
-      width: 100%;
-    }
-    .card-header {
-      font-size: 13px;
-    }
-    #bar-settlement, #line-graph, #yearly-graph {
-      height: 320px !important;
-    }
+    .custom-button { margin-bottom: 5px; font-size: 13px; }
+    .col-md-6 { width: 100%; }
+    .card-header { font-size: 13px; }
+    #bar-settlement, #line-graph, #yearly-graph { height: 320px !important; }
   }
 
-  /* Dispositivos grandes (desktops, 992px e abaixo) */
   @media (max-width: 991.98px) {
-    #bar-settlement, #line-graph, #yearly-graph {
-      height: 380px !important;
-    }
-    .card-header {
-      font-size: 14px;
-    }
+    #bar-settlement, #line-graph, #yearly-graph { height: 380px !important; }
+    .card-header { font-size: 14px; }
   }
 
-  /* Dispositivos extra grandes (desktops grandes, 1200px e acima) */
   @media (min-width: 1200px) {
-    #bar-settlement, #line-graph, #yearly-graph {
-      height: 450px;
-    }
+    #bar-settlement, #line-graph, #yearly-graph { height: 450px; }
   }
 
-  /* Ajustes gerais para gráficos */
-  .js-plotly-plot .plotly .modebar {
-    display: none !important;
-  }
-  .js-plotly-plot {
-    width: 100% !important;
-    height: 100% !important;
-  }
+  .js-plotly-plot .plotly .modebar { display: none !important; }
+  .js-plotly-plot { width: 100% !important; height: 100% !important; }
 
-  .map-container {
-    height: 450px;
-  }
+  .map-container { height: 450px; }
+  @media (max-width: 767.98px) { .map-container { height: 320px; } }
+  @media (max-width: 575.98px) { .map-container { height: 280px; } }
+
   @media (max-width: 767.98px) {
-    .map-container {
-      height: 320px;
-    }
-  }
-  @media (max-width: 575.98px) {
-    .map-container {
-      height: 280px;
-    }
+    .fw-bold { font-size: 14px; }
+    .form-select-sm { font-size: 12px; }
   }
 
-  /* Estilos para melhor legibilidade em dispositivos móveis */
-  @media (max-width: 767.98px) {
-    .fw-bold {
-      font-size: 14px;
-    }
-    .form-select-sm {
-      font-size: 12px;
-    }
+  /* Estilos para interatividade */
+  .bar-selected {
+    opacity: 1 !important;
+    stroke: #000 !important;
+    stroke-width: 2px !important;
   }
 
-  /* Opcional: se quiser uma borda sutil ao redor do gráfico Plotly */
-  #bar-settlement .plotly {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+  .leaflet-container {
+    transition: all 0.3s ease;
   }
+
+  .leaflet-interactive {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .leaflet-interactive:hover {
+    stroke-width: 2px !important;
+  }
+
+  #map-title {
+    transition: all 0.3s ease;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .card-header {
+    font-weight: bold;
+    color: #666;
+  }
+
+  .fw-bold {
+    font-weight: bold !important;
+    color: #666;
+  }
+  /* Adicione isso no seu <style> */
+.heat-legend {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+.heat-legend h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.legend-gradient {
+    height: 150px;
+    width: 20px;
+    margin: 0 auto;
+}
+
+.legend-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 150px;
+    margin-top: -150px;
+    text-align: right;
+}
+
+.legend-labels span {
+    transform: translateY(50%);
+}
+.header{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:28px;
+    }
+    .header-logo{
+      max-width:160px;
+      height:auto;
+    }
+    .subtitle{
+      font-size:1.1rem;
+      font-weight:500;
+      color:var(--dark-gray);
+      margin-top:6px;
+      text-align:center;
+    }
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      border:0;
+    }
   </style>
 </head>
 
 <body class="py-3">
+  <header class="header">
+      <!-- logotipo central -->
+    <img src="../../../img/Logo_SAD_rgb.png" alt="Ameaça e Pressão" class="header-logo">
+
+    <!-- sub‑título imediatamente abaixo -->
+    <p class="subtitle">
+      Análise de Área Acumulada na Amazônia Legal
+    </p>
+
+    <!-- h1 escondido para SEO/acessibilidade -->
+    <h1 class="sr-only">Ameaça e Pressão</h1>
+
+    </header>
 <div class="container-fluid" id="app-root">
 
   <!-- botões principais -->
@@ -166,7 +237,7 @@
   <div class="row gx-2 mb-4">
     <div class="col-12 col-md-6 mb-4 mb-md-0">
       <div class="card h-100">
-        <div class="card-header">Alerta de Degradação Florestal Acumulado Top 10</div>
+        <div class="card-header">Alerta de Degradação Florestal Acumulado</div>
         <div class="card-body p-0">
           <div id="bar-settlement"></div>
         </div>
@@ -177,11 +248,6 @@
         <div class="card-header" id="map-title">Mapa de Degradação Ambiental (km²)</div>
         <div class="card-body p-0 map-container">
           <div id="map-graph" style="height:100%"></div>
-          <div id="map-load-btn-container">
-            <button id="load-map-btn" class="btn btn-success">
-              <i class="fas fa-map me-2"></i>Carregar Mapa
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -192,7 +258,7 @@
     <div class="col-12 col-md-6 mb-4 mb-md-0">
       <div class="card h-100">
         <div class="card-header">
-          Alertas de Degradação Florestal Acumulado – Assentamentos por Estado
+          <b style="color:#666;">Série Histórica – Assentamentos</b>
         </div>
         <div class="card-body p-0">
           <div id="line-graph" style="height:450px"></div>
@@ -201,7 +267,7 @@
     </div>
     <div class="col-12 col-md-6">
       <div class="card h-100">
-        <div class="card-header">Área Total de Degradação por Ano (km²)</div>
+        <div class="card-header"><b style="color:#666;">Área Total por Ano</b></div>
         <div class="card-body p-0">
           <div id="yearly-graph" style="height:450px"></div>
         </div>
@@ -248,7 +314,7 @@
             <label class="form-check-label" for="dec-dot">Ponto</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value=",">
+            <input class="form-check-input" type="radio" name="dec-sep" id="dec-comma" value="," >
             <label class="form-check-label" for="dec-comma">Vírgula</label>
           </div>
         </div>
@@ -310,15 +376,13 @@
   let geojson, df = [], years = [], ufs = [], allSet = [];
   let selUF = [], selSet = [], curYear, barSet = [];
   let mapInit=false, leafletMap, geoLayer, legend;
-  let NAME_KEY='ASSENTAMEN';
+  let NAME_KEY='NOME_PROJ2'; // ajuste conforme propriedade do seu GeoJSON
 
   // DOM
   const stateBtn         = document.getElementById('state-btn');
   const stateSelect      = document.getElementById('state-select');
   const resetBtn         = document.getElementById('reset-btn');
   const yearSelect       = document.getElementById('year-select');
-  const loadMapBtn       = document.getElementById('load-map-btn');
-  const mapBtnContainer  = document.getElementById('map-load-btn-container');
   const settlementList   = document.getElementById('settlement-list');
   const settlementSearch = document.getElementById('settlement-search');
   const selectedCount    = document.getElementById('selected-count');
@@ -329,7 +393,6 @@
   const decSepSelector   = 'input[name="dec-sep"]:checked';
   const removeAccentsChk = document.getElementById('remove-accents');
 
-  // Função para obter configurações responsivas baseadas no tamanho da tela
   function getResponsiveConfig() {
     const width = window.innerWidth;
     if (width <= 575) {
@@ -371,54 +434,27 @@
     }
   }
 
-  // Função para truncar texto longo
   function truncateText(text, maxLength = 30) {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }
 
-  /**
-   * Função genérica para plotar gráfico de barras horizontais responsivo em Plotly.
-   * Recebe:
-   *   containerId: string do id da div Plotly
-   *   data: array de { key: string, value: number }
-   *   titleTextMain: string do título principal
-   *   titleTextSub: string do subtítulo (por ex. "Área (2024) – Top 10")
-   */
   function plotHorizontalBar({ containerId, data, titleTextMain, titleTextSub }) {
     const config = getResponsiveConfig();
-    // Ordena decrescente
     const arr = data.slice().sort((a, b) => b.value - a.value);
-    // Trunca labels dinamicamente
     const maxNameLength = window.innerWidth <= 575 ? 20 : window.innerWidth <= 767 ? 25 : 30;
     const truncatedNames = arr.map(d => truncateText(d.key, maxNameLength));
-    // Calcula margem esquerda dinâmica
-    const maxLen = truncatedNames.reduce((max, name) => Math.max(max, name.length), 0);
+    
     const leftMargin = Math.min(
       config.margin.l + 100,
-      config.margin.l + maxLen * (config.tickSize * 0.6)
+      config.margin.l + maxNameLength * (config.tickSize * 0.6)
     );
-    // Valores e textos formatados
+
     const valores = arr.map(d => d.value);
-    const textos = arr.map(d => {
-      const decimals = window.innerWidth <= 575 ? 0 : 2;
-      return d.value.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + ' km²';
-    });
-    // Escala de cor: valores maiores = tom mais escuro
     const maxVal = d3.max(valores) || 1;
     const colorScale = d3.scaleLinear().domain([0, maxVal]).range([0.4, 1]);
-    const barColors = valores.map(v => {
-      const opacity = colorScale(v);
-      // verde base #28a745
-      return `rgba(40,167,69,${opacity})`;
-    });
-    // Posições de texto
-    const mobile = window.innerWidth <= 575;
-    const textpositions = arr.map(_ => mobile ? 'inside' : 'outside');
-    // Cores de texto: se dentro, branco; se fora, preto
-    const textcolors = arr.map(_ => mobile ? '#ffffff' : '#000000');
+    const barColors = valores.map(v => `rgba(40,167,69,${colorScale(v)})`);
 
-    // Monta trace
     const trace = {
       x: valores,
       y: truncatedNames,
@@ -428,45 +464,113 @@
         color: barColors,
         line: { color: '#1e7e34', width: 1 }
       },
-      text: textos,
-      textposition: textpositions,
-      textfont: { size: config.tickSize, color: textcolors },
-      texttemplate: '%{text}',
       hovertemplate: '<b>%{customdata}</b><br>Área: %{x:.2f} km²<extra></extra>',
       customdata: arr.map(d => d.key)
     };
 
-    // Título com duas linhas: principal e subtítulo em fonte menor e cor mais discreta
-    const titleHtml = 
-      `<span style="font-size:${config.titleSize}px;">${titleTextMain}</span><br>` +
-      `<span style="font-size:${Math.round(config.titleSize * 0.8)}px;color:#666;">${titleTextSub}</span>`;
-
     const layout = {
-      title: {
-        text: titleHtml,
-        x: 0.5,
-        xanchor: 'center',
-        yanchor: 'top'
+      title: null,
+      margin: { 
+        l: leftMargin,
+        r: config.margin.r,
+        t: 10,
+        b: config.margin.b,
+        pad: 0
       },
-      margin: { l: leftMargin, r: config.margin.r, t: config.margin.t, b: config.margin.b },
       height: config.height,
       yaxis: {
         automargin: true,
         tickfont: { size: config.tickSize },
-        tickmode: 'linear'
+        tickmode: 'linear',
+        autorange: 'reversed'
       },
       xaxis: {
-        title: { text: 'Área (km²)', font: { size: config.axisSize } },
-        tickfont: { size: config.tickSize },
+        title: { 
+          text: 'Área (km²)', 
+          font: { 
+            size: config.axisSize,
+            color: '#555'
+          } 
+        },
+        tickfont: { 
+          size: config.tickSize,
+          color: '#555'
+        },
         showgrid: true,
-        gridcolor: 'rgba(0,0,0,0.1)'
+        gridcolor: 'rgba(0,0,0,0.1)',
+        zeroline: false
       },
       plot_bgcolor: 'rgba(255,255,255,1)',
       paper_bgcolor: 'rgba(255,255,255,1)',
-      font: { size: config.tickSize }
+      font: { 
+        size: config.tickSize,
+        color: '#555'
+      }
     };
 
-    Plotly.newPlot(containerId, [trace], layout, { displayModeBar: false, responsive: true });
+    const plotElement = document.getElementById(containerId);
+    Plotly.newPlot(plotElement, [trace], layout, { displayModeBar: false, responsive: true });
+
+    plotElement.on('plotly_click', function(data) {
+      if(data.points && data.points.length > 0) {
+        const settlementName = data.points[0].customdata;
+        zoomToSettlement(settlementName);
+      }
+    });
+  }
+
+  function zoomToSettlement(settlementName) {
+    if(!geoLayer) return;
+    
+    // Remove destaque anterior das barras
+    d3.selectAll('.bar').classed('bar-selected', false);
+    
+    // Destaca a barra correspondente
+    if(window.currentBarData) {
+      const index = window.currentBarData.findIndex(d => d.key === settlementName);
+      if(index >= 0) {
+        const barElement = document.querySelector(`.plotly .layer-above .points path.point:nth-child(${index + 1})`);
+        if(barElement) {
+          barElement.classList.add('bar-selected');
+        }
+      }
+    }
+    
+    // Encontra e destaca o assentamento no mapa
+    let targetLayer = null;
+    geoLayer.eachLayer(layer => {
+      if(layer.feature.properties[NAME_KEY] === settlementName) {
+        targetLayer = layer;
+      }
+    });
+    
+    if(targetLayer) {
+      // Atualiza o título do mapa
+      document.getElementById('map-title').textContent = 
+        `Mapa de Degradação Ambiental - ${settlementName} (${yearSelect.value})`;
+      
+      // Dá zoom com animação
+      leafletMap.flyToBounds(targetLayer.getBounds(), {
+        padding: [50, 50],
+        maxZoom: 12,
+        duration: 1
+      });
+      
+      // Destaca o assentamento selecionado
+      geoLayer.eachLayer(l => {
+        if (l === targetLayer) {
+          l.setStyle({
+            weight: 3,
+            color: '#000',
+            fillOpacity: 0.9
+          });
+          l.bringToFront();
+          l.openTooltip();
+        } else {
+          geoLayer.resetStyle(l);
+        }
+      });
+    }
   }
 
   async function loadGeo(){ geojson = await (await fetch(GEOJSON_URL)).json(); }
@@ -511,7 +615,6 @@
     return out;
   }
 
-  // Função plotBar usando o estilo definido
   function plotBar() {
     const dataArr = base();
     const agg = d3.rollup(dataArr, v => d3.sum(v, d => d.AREAKM2), d => d.ASSENTAMEN);
@@ -519,15 +622,19 @@
     if (selSet.length) {
       arr = arr.filter(d => selSet.includes(d.key));
     } else {
-      // Top 10
       arr = arr.slice().sort((a,b) => b.value - a.value).slice(0, 10);
     }
+    
+    window.currentBarData = arr;
     barSet = arr.map(d => d.key);
 
-    const year = yearSelect.value;
-    const titleMain = 'Alerta de Degradação Florestal Acumulado Top 10';
-    const titleSub = `Área (${year}) – ${selSet.length ? 'Selecionados' : 'Top 10'}`;
-    plotHorizontalBar({ containerId: 'bar-settlement', data: arr, titleTextMain: titleMain, titleTextSub: titleSub });
+    const titleMain = 'Alerta de Degradação Florestal Acumulado';
+    plotHorizontalBar({ 
+      containerId: 'bar-settlement', 
+      data: arr, 
+      titleTextMain: titleMain,
+      titleTextSub: '' 
+    });
   }
 
   function initMap(){
@@ -555,36 +662,72 @@
     legend.style.display='block';
   }
 
-  function plotMap(){
+  function plotMap() {
     document.getElementById('map-title').textContent = `Mapa de Degradação Ambiental (km²) ${yearSelect.value}`;
-    if(!mapInit) return;
+    if (!mapInit) return;
+    
     const dataArr = base();
-    const agg  = d3.rollup(dataArr, v => d3.sum(v, d => d.AREAKM2), d => d.ASSENTAMEN);
-    const show = selSet.length? selSet : barSet;
+    const agg = d3.rollup(dataArr, v => d3.sum(v, d => d.AREAKM2), d => d.ASSENTAMEN);
+    const show = selSet.length ? selSet : barSet;
     const maxVal = d3.max(show, e => agg.get(e) || 0) || 1;
-    const color = d3.scaleSequential().domain([0,maxVal]).interpolator(d3.interpolateYlOrRd);
+    const color = d3.scaleSequential().domain([0, maxVal]).interpolator(d3.interpolateYlOrRd);
+    
+    // Adiciona/atualiza a legenda
     heatLegend(0, maxVal, color);
-    if(geoLayer) geoLayer.remove();
-    geoLayer = L.geoJSON(geojson,{
-      coordsToLatLng:c=>L.latLng(c[1],c[0]),
-      filter:f=>show.includes(f.properties[NAME_KEY]),
-      style:f=>({weight:1.2,color:'#555',fillOpacity:.75,fillColor:color(agg.get(f.properties[NAME_KEY])||0)}),
-      onEachFeature:(f,layer)=>{
-        const nome=f.properties[NAME_KEY];
-        const km2=agg.get(nome)||0;
-        layer.bindTooltip(`<strong>${nome}</strong><br>${km2.toLocaleString('pt-BR',{maximumFractionDigits:2})} km²`,{sticky:true});
-        layer.on({
-          mouseover:e=>e.target.setStyle({weight:2,color:'#000'}).bringToFront(),
-          mouseout:e=>geoLayer.resetStyle(e.target),
-          click:e=>leafletMap.fitBounds(e.target.getBounds(),{maxZoom:10})
-        });
-      }
+    
+    if (geoLayer) geoLayer.remove();
+    
+    geoLayer = L.geoJSON(geojson, {
+        coordsToLatLng: c => L.latLng(c[1], c[0]),
+        filter: f => show.includes(f.properties[NAME_KEY]),
+        style: f => ({
+            weight: 1.2,
+            color: '#555',
+            fillOpacity: 0.75,
+            fillColor: color(agg.get(f.properties[NAME_KEY]) || 0)
+        }),
+        onEachFeature: (f, layer) => {
+            const nome = f.properties[NAME_KEY];
+            const km2 = agg.get(nome) || 0;
+            layer.bindTooltip(
+                `<strong>${nome}</strong><br>${km2.toLocaleString('pt-BR', {maximumFractionDigits:2})} km²`,
+                {sticky: true}
+            );
+            layer.on({
+                mouseover: e => e.target.setStyle({
+                    weight: 2,
+                    color: '#000'
+                }).bringToFront(),
+                mouseout: e => geoLayer.resetStyle(e.target),
+                click: e => leafletMap.fitBounds(e.target.getBounds(), {maxZoom: 10})
+            });
+        }
     }).addTo(leafletMap);
-    if(geoLayer.getLayers().length){
-      const b=geoLayer.getBounds(); leafletMap.fitBounds(b);
-      if(leafletMap.getZoom()>8) leafletMap.setZoom(8);
+    
+    // Ajuste inicial do zoom
+    if (geoLayer.getLayers().length) {
+        const b = geoLayer.getBounds();
+        leafletMap.fitBounds(b);
+        if (leafletMap.getZoom() > 8) {
+            leafletMap.setZoom(8);
+        }
     }
-  }
+}
+
+// Função da legenda (mantida como estava antes)
+function heatLegend(min, max, scale) {
+    legend.innerHTML = `
+        <h4>Área (km²)</h4>
+        <div class="legend-gradient"></div>
+        <div class="legend-labels">
+            <span>${max.toFixed(1)}</span>
+            <span>${((max+min)/2).toFixed(1)}</span>
+            <span>${min.toFixed(1)}</span>
+        </div>`;
+    legend.querySelector('.legend-gradient').style.background = 
+        `linear-gradient(to top, ${scale(min)} 0%, ${scale((min+max)/2)} 50%, ${scale(max)} 100%)`;
+    legend.style.display = 'block';
+}
 
   function plotLine(){
     const fil = df.filter(d=>
@@ -612,7 +755,7 @@
     }).filter(Boolean);
 
     Plotly.newPlot('line-graph', series, {
-      title: { text: 'Série Histórica – Assentamentos', x: 0.5, font: { size: config.titleSize } },
+      title: { text: '<b style="color:#666;">Série Histórica – Assentamentos</b>', x: 0.5, font: { size: config.titleSize } },
       xaxis: { title: { text: 'Ano', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
       yaxis: { title: { text: 'Área (km²)', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
       legend: {
@@ -653,13 +796,9 @@
       y: val,
       type: 'bar',
       marker: { color: 'rgba(40,167,69,0.7)', line: { width: 1, color: '#1e7e34' } },
-      text: val.map(v => window.innerWidth <= 575 ? v.toFixed(0) : v.toFixed(2)),
-      textposition: window.innerWidth <= 575 ? 'inside' : 'outside',
-      textfont: { size: config.tickSize },
-      texttemplate: '%{text}',
       hovertemplate: 'Ano: %{x}<br>Área Total: %{y:.2f} km²<extra></extra>'
     }], {
-      title: { text: 'Área Total por Ano', x: 0.5, font: { size: config.titleSize } },
+      title: { text: '<b style="color:#666;">Área Total por Ano</b>', x: 0.5, font: { size: config.titleSize } },
       xaxis: { title: { text: 'Ano', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
       yaxis: { title: { text: 'Área (km²)', font: { size: config.axisSize } }, tickfont: { size: config.tickSize } },
       margin: {
@@ -681,12 +820,12 @@
   function refreshList(){
     const term = (settlementSearch.value||"").toLowerCase();
     const filteredSet = allSet.filter(s=>s.toLowerCase().includes(term));
-    settlementList.innerHTML = filteredSet.map(s=>`
-      <div class="form-check">
+    settlementList.innerHTML = filteredSet.map(s=>
+      `<div class="form-check">
         <input class="form-check-input" type="checkbox" value="${s}" id="chk-${s}" ${selSet.includes(s)?'checked':''}>
         <label class="form-check-label" for="chk-${s}">${s}</label>
-      </div>
-    `).join('');
+      </div>`
+    ).join('');
     updateSelectedCount();
   }
 
@@ -695,12 +834,12 @@
   }
 
   function buildDownloadChecklist(){
-    downloadStateBox.innerHTML = ufs.map(u=>`
-      <div class="form-check form-check-inline">
+    downloadStateBox.innerHTML = ufs.map(u=>
+      `<div class="form-check form-check-inline">
         <input class="form-check-input" type="checkbox" value="${u}" id="dl-chk-${u}" checked>
         <label class="form-check-label" for="dl-chk-${u}">${u}</label>
-      </div>
-    `).join('');
+      </div>`
+    ).join('');
   }
 
   function downloadCsv(){
@@ -739,11 +878,11 @@
     document.body.removeChild(link);
   }
 
-  // Função para redimensionar gráficos quando a janela muda de tamanho
   function resizeCharts() {
     plotBar();
     plotLine();
     plotYearly();
+    plotMap();
   }
 
   // Event Listeners
@@ -751,18 +890,14 @@
     plotBar();
     plotLine();
     plotYearly();
-    mapBtnContainer.style.display = 'block';
-    if(geoLayer) geoLayer.remove();
-    if(legend) legend.style.display='none';
+    plotMap();
   });
 
   yearSelect.addEventListener('change', () => {
     plotBar();
     plotLine();
     plotYearly();
-    mapBtnContainer.style.display = 'block';
-    if(geoLayer) geoLayer.remove();
-    if(legend) legend.style.display='none';
+    plotMap();
   });
 
   resetBtn.addEventListener('click', () => {
@@ -775,15 +910,7 @@
     plotBar();
     plotLine();
     plotYearly();
-    mapBtnContainer.style.display = 'block';
-    if(geoLayer) geoLayer.remove();
-    if(legend) legend.style.display='none';
-  });
-
-  loadMapBtn.addEventListener('click', () => {
-    initMap();
     plotMap();
-    mapBtnContainer.style.display = 'none';
   });
 
   settlementSearch.addEventListener('keyup', refreshList);
@@ -811,19 +938,15 @@
     plotBar();
     plotLine();
     plotYearly();
-    mapBtnContainer.style.display = 'block';
-    if(geoLayer) geoLayer.remove();
-    if(legend) legend.style.display='none';
+    plotMap();
     const interestModal = bootstrap.Modal.getInstance(document.getElementById('interest-modal'));
     interestModal.hide();
   });
 
   downloadBtn.addEventListener('click', downloadCsv);
 
-  // Listener para redimensionamento da janela
   window.addEventListener('resize', debounce(resizeCharts, 300));
 
-  // Função debounce para evitar muitas chamadas durante o redimensionamento
   function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -844,6 +967,8 @@
   plotLine();
   plotYearly();
   refreshList();
+  initMap();
+  plotMap();
 })();
 </script>
 
